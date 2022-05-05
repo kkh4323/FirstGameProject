@@ -1,0 +1,13 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.SkeletalMeshMerger.cpp.obj": [
+			"SkeletalMeshMerger.cpp.obj",
+			"SkeletalMeshMergerBPLibrary.cpp.obj"
+		],
+		"Module.SkeletalMeshMerger.gen.cpp.obj": [
+			"SkeletalMeshMerger.init.gen.cpp.obj",
+			"SkeletalMeshMergerBPLibrary.gen.cpp.obj"
+		]
+	}
+}
