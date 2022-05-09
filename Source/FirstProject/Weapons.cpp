@@ -6,6 +6,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "particles/ParticleSystemComponent.h"
+#include "Components/BoxComponent.h" //무기에 박스 컴포넌트를 입혀주므로 필요한 헤더 파일.
+#include "Enemy.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 AWeapons::AWeapons()
 {
@@ -13,11 +16,37 @@ AWeapons::AWeapons()
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	SkeletalMesh->SetupAttachment(GetRootComponent());
 
+	CombatCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CombatCollision")); //전투 시 무기가 적의 몸체에 닿았을 때를 알리기 위한 컴포넌트.
+	CombatCollision->SetupAttachment(GetRootComponent());//콜리젼을 위한 박스컴포넌트 생성. 이제 블루프린트에서 볼 수 있다.
+
+	
 
 	bWeaponParticle = false;
 
 	WeaponState = EWeaponState::EWS_Pickup; 
+
+	Damage = 25.f; //무기가 디폴트로 갖는 데미지.
 }
+
+//뭐든 무기와 부딪히는 것이 있다면 OverlapBegin과 OverlapEnd함수가 호출될 것이다.
+void AWeapons::BeginPlay()
+{
+	Super::BeginPlay();
+
+	CombatCollision->OnComponentBeginOverlap.AddDynamic(this, &AWeapons::CombatOnOverlapBegin);
+	CombatCollision->OnComponentEndOverlap.AddDynamic(this, &AWeapons::CombatOnOverlapEnd);
+	
+
+	//무기에 콜리젼 오버랩이 될 때마다 파티션이 재생되는 것을 방지한다.
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //ActivateCollision이 호출되기 전까지는 어떤 충돌도 무시한다.
+	CombatCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	CombatCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); //기본적으로는 어떠한 것과 오버랩 되어도 무시하도록 한다.
+	CombatCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); //Pawn과 오버랩 될 때에만 반응하도록 한다.
+
+
+}
+
+
 
 void AWeapons::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -105,3 +134,56 @@ void AWeapons::Equip(AMain* Character)
 	}
 }
 //결과적으로 Equip 함수를 호출하면 아이템이 부착된 소켓을 플레이어 스켈레톤에 다시 부착시키는 것이다.
+
+//무기의 몸체부분에 생성한 컴포넌트 박스와 적 NPC의 몸체가 겹쳤을 대 발생시킬 이벤트를 여기서 정의한다.	
+void AWeapons::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//무기와 overlap될 다른 액터를 check할 것이다.
+	if (OtherActor) //만약 무기와 Overlap된 다른 액터가 유효한 것이라면(여기서는 당연히 적이다. 그러므로 enemy헤더파일을 인클루드 해야 한다.)
+	{
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor); //확인한 OtherActor를 Enemy타입으로 Enemy라는 변수에 넣어준다.
+		if (Enemy)
+		{
+			if (Enemy->HitParticles) // Particle 이 설정되지 않은 상태에서 이를 수정하려 하면 에디터에서 크래쉬가 발생한다.
+			{
+				const USkeletalMeshSocket* WeaponSocket = SkeletalMesh->GetSocketByName("WeaponSocket"); //블루프린트 에디터에서 무기의 날 부분에 만든 소켓을 적 NPC를 공격할 때 유효한 타격점으로 만들 것이다.(이렇게 안 하면 무기 날 부분이 아니라 일반적으로 root로 지정되어 있는 무기의 손잡이 부분이 타격점이 되는 현상이 발생한다.)
+				if (WeaponSocket)
+				{
+					FVector SocketLocation = WeaponSocket->GetSocketLocation(SkeletalMesh);
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Enemy->HitParticles, SocketLocation, FRotator(0.f), false);
+					//HitParticle이 유효한지 확인된다면 Emitter가 이 위치(적이 칼을 맞는 자리)에서 특정 파티클 시스템이 나타나도록 할 것이다.
+					//3번째 매개변수인 SocketLocation은 파티클시스템 Emitter를 무기의 위치에 발생시킬 것이다. 
+					//마지막 매개변수는 파티클 시스템이 재생된 이후이 자동으로 없어지는지 설장하는 것이다. 한번만 재생할 것이므로 false를 할 것이다.
+				}
+			}
+			if (Enemy->HitSound) //적을 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
+			{
+				UGameplayStatics::PlaySound2D(this, Enemy->HitSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.
+			}
+
+			if (Enemy->ScreamingSound) //마찬가지로 ScreamingSound 도 재생
+			{
+				UGameplayStatics::PlaySound2D(this, Enemy->ScreamingSound); 
+			}
+		}
+	}
+}
+
+void AWeapons::CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+}
+
+
+
+
+
+void AWeapons::ActivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // ActivateCollision이 호출될 때에만 QueryOnly로 충돌이 발생한다.
+}
+
+void AWeapons::DeactivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //디폴트로 어떤 충돌도 무시한다.
+}

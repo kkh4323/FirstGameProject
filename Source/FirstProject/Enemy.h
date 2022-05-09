@@ -54,6 +54,33 @@ public:
 	class AAIController* AIController; //AI와 관련된 기능을 담은 클래스.
 
 
+	//적이 갖는 체력
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")//세 변수 모두 인스턴스마다 블루프린트로 수정 가능하도록 정한다.
+	float Health; 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float MaxHealth; //헬스바를 표현할 때 이 고정치 변수가 필요하다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float Damage; //적이 플레이어에게 주는 데미지.
+
+
+
+	/*
+	적이 공격을 받았을 때 파티클 시스템을 통해 출혈효과를 만들 것이다.
+	enemy 헤더 파일에 이를 구현하는 이유는 적 클래스를 통해 나오는 객체마다 다른 종류의 파티클 시스템을 적용할 수 있도록 하기 위함이다.
+	예를 들어 어떤 적은 초록색 피가 나오는 반면 어떤 적은 빨간 피가 나온다든지.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class UParticleSystem* HitParticles;
+
+	//적이 무기에 맞았을 때 소리를 내도록 한다.(비명이라든지 둔탁한 소리라든지 등등)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class USoundCue* HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* ScreamingSound;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

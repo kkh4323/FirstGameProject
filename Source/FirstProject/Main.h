@@ -150,9 +150,10 @@ public:
 
 	bool bLMBDown;
 	bool bRMBDown;
+	bool bPlayerMoving;
+
 	void LMBDown();
 	void LMBUp();
-
 	void RMBDown();
 	void RMBUp();
 
@@ -199,4 +200,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StrongAttackEnd(); //강공격 끝
+
+
+	UFUNCTION(BlueprintCallable)
+	void PlaySwingSound(); //무기 휘두르는 소리
 };

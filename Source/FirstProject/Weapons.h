@@ -53,10 +53,34 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SkeletalMesh")
 	class USkeletalMeshComponent* SkeletalMesh;	//SkeletalMesh의 생성
 
+	/*
+	무기가 적과 부딪히면 데미지를 주고 피와 같은 파티클 시스템이 작동해야 한다. 이것이 구현되어 있지 않으면 무기는 그냥 적의 몸을 통과할 뿐이다.
+	그래서 무기에 박스 컴포넌트를 붙여준다.(무기의 모양과 가장 유사한직사각형이 제일 적합할 것)
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
+	class UBoxComponent* CombatCollision;
 
-	//무기를 장비할 때 소리가 나도록 한다.
+
+	//무기를 장비할 때 소리가 나도록 한다. sound 큐를 생성하고 블루프린트에서 이를 수정할 수 있게 한다. 어딘가에 소리를 넣고 싶을 때 이렇게 헤더파일에 먼저 생성하고 cpp 파일의 해당 위치에 넣는다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sound")
-	class USoundCue* OnEquipSound;
+	class USoundCue* OnEquipSound;	//이 헤더 파일에서 처음으로 soundcue를 만드는 것임. 이럴 땐 class를 기입해주어야 한다. 이 다음부터는 x.
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Combat")
+	float Damage; //무기가 주는 데미지. 각 인스턴스마다 이 데미지를 블루프린트를 통해 수정 가능하도록 한다.
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sound")
+	USoundCue* SwingSound;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+
+
+
+public:
 
 
 	//UFUNCTION() //상속받은 함수는 UFUNCTION으로 표시될 수 없다.
@@ -74,4 +98,19 @@ public:
 	//WeaponState를 set 또는 get
 	FORCEINLINE void SetWeaponState(EWeaponState State) { WeaponState = State; } 
 	FORCEINLINE EWeaponState GetWeaponState() { return WeaponState; }
+
+	
+
+	//무기가 타격효과를 발하는 시점은 무기가 적 NPC의 몸체와 부딪혔을 때, 즉 Overlap되었을 때이다.
+	UFUNCTION()
+	void CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateCollision();
+
 };

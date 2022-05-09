@@ -9,9 +9,11 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Weapons.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -57,7 +59,7 @@ AMain::AMain()
 	MaxHealth = 100.f;	
 	Health = 75.f;
 	MaxStamina = 150.f;
-	Stamina = 120.f;
+	Stamina = 150.f;
 	Coins = 0;	
 
 	RunningSpeed = 600.f;	//플레이어 이동 속도
@@ -67,7 +69,7 @@ AMain::AMain()
 	bShiftKeyDown = false;	//쉬프트 키는 디폴트로 눌려져 있지 않은 상태이다.
 
 	bRMBDown = false;
-
+	bPlayerMoving = false;
 
 
 	//ENUM으로 만든 플레이어의 초기 상태를 나타내는 변수들 초기화(스테미너 변화 및 상태)
@@ -248,6 +250,7 @@ void AMain::MoveForward(float Value)
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
+		
 	}
 }
 
@@ -262,6 +265,7 @@ void AMain::MoveRight(float Value)
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, Value);
+		
 	}
 }
 
@@ -428,7 +432,12 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 			플레이어에게 공격 패턴을 부여할 수 있다.(콤보 시스템 형성)
 			콤보의 개수 만큼 case문을 생성.
 			*/
-			int32 Section = FMath::RandRange(0, 2); //RandRange의 매개변수로 들어가는 수 사이의 무작위 숫자대로 애니메이션을 실행한다. 0,1,2 하나가 나오고 그에 해당하는 case문의 애니메이션을 실행하도록 하는 것이다.
+			int32 Section = FMath::RandRange(0, 1); //RandRange의 매개변수로 들어가는 수 사이의 무작위 숫자대로 애니메이션을 실행한다. 0,1,2 하나가 나오고 그에 해당하는 case문의 애니메이션을 실행하도록 하는 것이다.
+			
+			//if (bPlayerMoving) Section = 1;
+			if (bShiftKeyDown) Section = 2;
+			
+
 			switch (Section)
 			{
 			case 0:
@@ -451,6 +460,10 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 				;
 			}
 		}
+		//if (WeaponEquipped->SwingSound) //무기를 장비하고 있는 상태라면 무기를 휘두를 때마다 휘두르는 소리가 나도록 한다.
+		//{
+		//	//UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound);//이러한 sound 를 사용하려면 그에 맞는 헤더 파일을 부를 수 있어야 한다.
+		//}
 	}
 }
 
@@ -472,6 +485,8 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 			콤보의 개수 만큼 case문을 생성.
 			*/
 			int32 Section = FMath::RandRange(0, 1); //RandRange의 매개변수로 들어가는 수 사이의 무작위 숫자대로 애니메이션을 실행한다. 0,1,2 하나가 나오고 그에 해당하는 case문의 애니메이션을 실행하도록 하는 것이다.
+			Section = 1;
+			if (bShiftKeyDown) Section = 0;
 			switch (Section)
 			{
 			case 0:
@@ -493,6 +508,10 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 				;
 			}
 		}
+		//if (WeaponEquipped->SwingSound) //무기를 장비하고 있는 상태라면 무기를 휘두를 때마다 휘두르는 소리가 나도록 한다.
+		//{
+		//	//UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound);//이러한 sound 를 사용하려면 그에 맞는 헤더 파일을 부를 수 있어야 한다.
+		//}
 	}
 }
 
@@ -521,4 +540,11 @@ void AMain::AttackEnd() //공격 끝
 	공격을 하고 나면 다시 마우스를 누르기 전까지는 공격을 해서는 안 된다.if문 아래가 아니라 위에 있다면 계속 LMB가 다운된 상태로 인식되기 때문에 마우스를 누르지 않아도 공격을 계속 진행한다.
 	그래서 if문 아래에 배치해주어야 하는 것이다. 공격하고 false로 다시 바꿔지도록.
 	*/
+
+}
+
+
+void AMain::PlaySwingSound() 
+{
+	if(WeaponEquipped) UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound); //무기를 장비하고 있는 상태라면 무기를 휘두를 때마다 휘두르는 소리가 나도록 한다.
 }

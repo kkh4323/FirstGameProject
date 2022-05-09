@@ -33,9 +33,13 @@ AEnemy::AEnemy()
 	
 	CombatSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatSphere"));
 	CombatSphere->SetupAttachment(GetRootComponent());
-	CombatSphere->InitSphereRadius(100.f); //적의 플레이어 공격 반경 초기화
+	CombatSphere->InitSphereRadius(50.f); //적의 플레이어 공격 반경 초기화
 
 	bOverlappingCombatSphere = false;
+
+	Health = 75.f; //적 기본 체력
+	MaxHealth = 200.f; //적 최고 체력
+	Damage = 20.f; //적 데미지
 }
 
 // Called when the game starts or when spawned
@@ -125,7 +129,8 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 			if (Main) 
 			{
 				bOverlappingCombatSphere = false;
-				if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
+				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
+				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)
 				{
 					MoveToTarget(Main);
 					CombatTarget = nullptr;
@@ -145,7 +150,7 @@ void AEnemy::MoveToTarget(class AMain* Target)
 		/*UE_LOG(LogTemp, Warning, TEXT("MoveToTarget()"));*/ //겹쳤을 때 풀력로그에 출력할 것
 		FAIMoveRequest MoveRequest; 
 		MoveRequest.SetGoalActor(Target); //GoalActor은 MoveRequest 구조체의 멤버함수로, 타겟 액터, 즉 여기서는 메인캐릭터가 된다.
-		MoveRequest.SetAcceptanceRadius(15.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
+		MoveRequest.SetAcceptanceRadius(1.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
 
 		FNavPathSharedPtr NavPath;
 		AIController->MoveTo(MoveRequest, &NavPath); //MoveTo는 AI의 제어와 관련된 함수로 매개변수로 들어가는 것의 종류가 많다. 이는 언리얼 엔진 공식문서를 참고하도록.
