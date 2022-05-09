@@ -5,7 +5,13 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/SphereComponent.h"
 #include "AIController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Main.h"
+#include "Sound/SoundCue.h"
+#include "Components/BoxComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
 
 
 /*
@@ -37,6 +43,10 @@ AEnemy::AEnemy()
 
 	bOverlappingCombatSphere = false;
 
+	CombatCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CombatCollision")); //적의 무기가 플레이어에 대해 갖는 유효 타격 박스
+	//적의 특정 위치에 이 박스를 만들고 싶다면, 그 위치에 소켓을 붙이고 거기에 CombatCollision을 부착시키는 것이 좋다. AttachToComponent는 한 컴포넌트를 다른 컴포넌트에 부착시키는 함수이다. 이 경우에 사용.
+	CombatCollision->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("weapon_rSocket"));
+
 	Health = 75.f; //적 기본 체력
 	MaxHealth = 200.f; //적 최고 체력
 	Damage = 20.f; //적 데미지
@@ -55,6 +65,13 @@ void AEnemy::BeginPlay()
 
 	CombatSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapBegin);
 	CombatSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapEnd);
+
+	//Weapons.cpp에 있는 파라미터를 그대로 가져온 것. NPC가 플레이어를 공격할 때에도 그 반대와 같은 방식과 조건으로 동작해야 하기 때문.
+	//무기에 콜리젼 오버랩이 될 때마다 파티션이 재생되는 것을 방지한다.
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //ActivateCollision이 호출되기 전까지는 어떤 충돌도 무시한다.
+	CombatCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	CombatCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); //기본적으로는 어떠한 것과 오버랩 되어도 무시하도록 한다.
+	CombatCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); //Pawn과 오버랩 될 때에만 반응하도록 한다.
 }
 
 // Called every frame
@@ -140,6 +157,62 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 	}
 }
 
+
+
+
+void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//NPC의 무기와 overlap될 다른 액터를 check할 것이다. 여기서는 당연히 플레이어 캐릭터인 main이 될 것이다. enemy가 되는 weapons.cpp에서와는 다르다.
+	if (OtherActor) //만약 무기와 Overlap된 다른 액터가 유효한 것이라면(여기서는 당연히 플레이어 캐릭터이다. 그러므로 Main헤더파일을 인클루드 해야 한다.)
+	{
+		AMain* MainCharacter = Cast<AMain>(OtherActor); //확인한 OtherActor를 Main타입으로 MainCharacter라는 변수에 넣어준다.
+		if (MainCharacter) //만약 닿은 것이 주인공 캐릭터라면 아래 실행.
+		{
+			if (MainCharacter->HitParticles) // Particle 이 설정되지 않은 상태에서 이를 수정하려 하면 에디터에서 크래쉬가 발생한다.
+			{
+				const USkeletalMeshSocket* HitPoint = GetMesh()->GetSocketByName("HitPoint"); //블루프린트 에디터에서 무기의 날 부분에 만든 소켓을 적 NPC를 공격할 때 유효한 타격점으로 만들 것이다.(이렇게 안 하면 무기 날 부분이 아니라 일반적으로 root로 지정되어 있는 무기의 손잡이 부분이 타격점이 되는 현상이 발생한다.) HitPoint라는 별명은 블루프린트에서 생성한 것이다.
+				if (HitPoint)
+				{
+					FVector SocketLocation = HitPoint->GetSocketLocation(GetMesh());
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MainCharacter->HitParticles, SocketLocation, FRotator(0.f), false);
+					//HitParticle이 유효한지 확인된다면 Emitter가 이 위치(적이 칼을 맞는 자리)에서 특정 파티클 시스템이 나타나도록 할 것이다.
+					//3번째 매개변수인 SocketLocation은 파티클시스템 Emitter를 무기의 위치에 발생시킬 것이다. 
+					//마지막 매개변수는 파티클 시스템이 재생된 이후이 자동으로 없어지는지 설장하는 것이다. 한번만 재생할 것이므로 false를 할 것이다.
+				}
+			}
+			if (MainCharacter->HitSound) //적을 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
+			{
+				UGameplayStatics::PlaySound2D(this, MainCharacter->HitSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.(단 soundcue 헤더파일은 따로 추가해주어야 한다. 유념!)
+			}
+
+			if (MainCharacter->ScreamingSound) //마찬가지로 ScreamingSound 도 재생
+			{
+				UGameplayStatics::PlaySound2D(this, MainCharacter->ScreamingSound);
+			}
+		}
+	}
+}
+
+void AEnemy::CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+}
+
+
+//블루프린트의 CombaMontage에서 AnimNotifier로 언제 Collision을 활성화 또는 비활성화 시킬지 시점을 구했다. 
+//Weapons.cpp에서 구현한 것처럼 적의 무기에도 플레이어가 충돌하고 반응을 해야 한다. 콜리젼을 활성화,비활성화 시키는 것은 이 작업에 필요하다.
+void AEnemy::ActivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // ActivateCollision이 호출될 때에만 QueryOnly로 충돌이 발생한다.
+}
+
+void AEnemy::DeactivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //디폴트로 어떤 충돌도 무시한다.
+}
+
+
+
 //타겟으로 이동하도록 하는 함수 : 플레이어 캐릭터가 NPC의 인식 반경에 접하는 순간 호출된다 = AgroSphereOnOverlapBegin.
 void AEnemy::MoveToTarget(class AMain* Target)
 {
@@ -167,4 +240,22 @@ void AEnemy::MoveToTarget(class AMain* Target)
 			UKismetSystemLibrary::DrawDebugSphere(this, Location, 30.f, 7, FLinearColor::Green, 10.f, 1.25f);
 		}*/
 	}
+}
+
+void AEnemy::Attack()//적 공격시 실행할 내용
+{
+	if (AIController)
+	{
+		AIController->StopMovement();
+		SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //AIController이 유효하다면(항상 유효함) 공격을 진행
+	}
+	if (!bAttacking)	//만약 공격모션을 진행하고 있는 것이 아니라면 공격모션을 시작할 수 있음
+	{
+		bAttacking = true;
+	}
+}
+
+void AEnemy::AttackEnd()//적 공격이 끝났을 때.
+{
+	bAttacking = false;
 }

@@ -65,6 +65,12 @@ public:
 
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UAnimMontage* CombatMontage;
+
+
+
+
 	/*
 	적이 공격을 받았을 때 파티클 시스템을 통해 출혈효과를 만들 것이다.
 	enemy 헤더 파일에 이를 구현하는 이유는 적 클래스를 통해 나오는 객체마다 다른 종류의 파티클 시스템을 적용할 수 있도록 하기 위함이다.
@@ -79,6 +85,17 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* ScreamingSound;
+
+	//적이 무기를 휘두를 때 나오는 소리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* SwingSound;
+
+	
+
+	//적이 휘두르는 무기에 박스 컴포넌트를 붙여 플레이어에 대한 타격 유효범위가 되도록 만들 것이다.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	class UBoxComponent* CombatCollision;
+
 
 
 protected:
@@ -107,6 +124,11 @@ public:
 	virtual void CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 
+
+	//적 NPC가 현재 공격을 진행중인지 아닌지 알 수 있도록 하는 불리언 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bAttacking; 
+
 	//타겟으로 AI가 이동하도록 하는 함수. Main형 target를 매개변수로 가짐.(플레이어 캐릭터가 타겟이 된다.)
 	UFUNCTION(BlueprintCallable)
 	void MoveToTarget(class AMain* Target);
@@ -117,4 +139,26 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
 	AMain* CombatTarget;
+
+	//Weapons.h에 있는 것을 그대로 가져온 것. 무기가 타격효과를 발하는 시점은 NPC의 무기가 플레이어 캐릭터의 몸체와 부딪혔을 때, 즉 Overlap되었을 때이다.
+	UFUNCTION()
+	void CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateCollision();
+
+
+	//적 공격시 실행할 내용을 담은 함수와 적 공격 중단 함수
+
+	void Attack();
+
+
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+
 };

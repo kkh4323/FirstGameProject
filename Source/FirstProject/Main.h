@@ -61,6 +61,20 @@ public:
 	float MinSprintStamina;
 
 
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UParticleSystem* HitParticles;
+
+	//플레이어가 무기에 맞았을 때 소리를 내도록 한다.(비명이라든지 둔탁한 소리라든지 등등)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class USoundCue* HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* ScreamingSound;
+
+
+
 	//이동상태와(걷는지 뛰는지) 달리는 속도를 정한다.
 	void SetMovementStatus(EMovementStatus Status);
 
@@ -204,4 +218,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void PlaySwingSound(); //무기 휘두르는 소리
+
+
+
 };
