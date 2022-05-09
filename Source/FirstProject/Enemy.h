@@ -152,13 +152,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateCollision();
 
-
 	//적 공격시 실행할 내용을 담은 함수와 적 공격 중단 함수
 
-	void Attack();
+	void EnemyAttack();
 
 
 	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	void EnemyAttackEnd();
 
 };

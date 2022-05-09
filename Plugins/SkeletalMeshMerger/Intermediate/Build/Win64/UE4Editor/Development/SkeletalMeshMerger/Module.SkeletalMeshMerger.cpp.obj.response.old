@@ -28,10 +28,11 @@
 /we4458
 /we4459
 /wd4463
+/we4668
 /wd4244
 /wd4838
 /I .
-/I "E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Private"
+/I "D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Private"
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\CoreUObject
 /I Runtime
 /I Runtime\CoreUObject\Public
@@ -77,6 +78,8 @@
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\GameplayTags
 /I Runtime\GameplayTags\Classes
 /I Runtime\GameplayTags\Public
+/I ..\Intermediate\Build\Win64\UE4Editor\Inc\DeveloperSettings
+/I Runtime\DeveloperSettings\Public
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\PacketHandler
 /I Runtime\PacketHandlers
 /I Runtime\PacketHandlers\PacketHandler\Classes
@@ -94,8 +97,6 @@
 /I Runtime\NetworkReplayStreaming\NetworkReplayStreaming\Public
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\PhysicsCore
 /I Runtime\PhysicsCore\Public
-/I ..\Intermediate\Build\Win64\UE4Editor\Inc\DeveloperSettings
-/I Runtime\DeveloperSettings\Public
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\Chaos
 /I Runtime\Experimental
 /I Runtime\Experimental\Chaos\Public
@@ -231,9 +232,9 @@
 /I Editor\Kismet\Public
 /I ..\Intermediate\Build\Win64\UE4Editor\Inc\ClothingSystemRuntimeInterface
 /I Runtime\ClothingSystemRuntimeInterface\Public
-/I "E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Inc\SkeletalMeshMerger"
-/I "E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Source"
-/I "E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public"
+/I "D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Inc\SkeletalMeshMerger"
+/I "D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Source"
+/I "D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public"
 /I ThirdParty\PhysX3\PxShared\include
 /I ThirdParty\PhysX3\PxShared\include\cudamanager
 /I ThirdParty\PhysX3\PxShared\include\filebuf
@@ -257,18 +258,18 @@
 /I ThirdParty\PhysX3\APEX_1.4\shared\general\RenderDebug\public
 /I ThirdParty\PhysX3\APEX_1.4\shared\general\PairFilter\include
 /I ThirdParty\PhysX3\APEX_1.4\shared\internal\include
-/I "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\INCLUDE"
-/I "C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um"
-/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\ucrt"
-/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\shared"
-/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\um"
-/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\winrt"
-/FI"E:\Unreal Projects\Plugin\Intermediate\Build\Win64\PluginEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h"
-/Yu"E:\Unreal Projects\Plugin\Intermediate\Build\Win64\PluginEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h"
-/Fp"E:\Unreal Projects\Plugin\Intermediate\Build\Win64\PluginEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.pch"
-"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp"
-/FI"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Definitions.SkeletalMeshMerger.h"
-/Fo"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp.obj"
+/I "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\INCLUDE"
+/I "C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8\include\um"
+/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.22000.0\ucrt"
+/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.22000.0\shared"
+/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.22000.0\um"
+/I "C:\Program Files (x86)\Windows Kits\10\include\10.0.22000.0\winrt"
+/FI"D:\Unreal Engine 4\FirstProject\Intermediate\Build\Win64\FirstProjectEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h"
+/Yu"D:\Unreal Engine 4\FirstProject\Intermediate\Build\Win64\FirstProjectEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h"
+/Fp"D:\Unreal Engine 4\FirstProject\Intermediate\Build\Win64\FirstProjectEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.pch"
+"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp"
+/FI"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Definitions.SkeletalMeshMerger.h"
+/Fo"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp.obj"
 /TP
 /GR-
 /W4

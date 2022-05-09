@@ -1,8 +1,8 @@
-D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Definitions.SkeletalMeshMerger.h
-D:/Unreal Engine 4/FirstProject/Plugins/SkeletalMeshMerger/Source/SkeletalMeshMerger/Private/SkeletalMeshMerger.cpp
-D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public\SkeletalMeshMerger.h
-D:/Unreal Engine 4/FirstProject/Plugins/SkeletalMeshMerger/Source/SkeletalMeshMerger/Private/SkeletalMeshMergerBPLibrary.cpp
-D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public\SkeletalMeshMergerBPLibrary.h
+D:\ProjectFolderfromGit\FirstGameProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Definitions.SkeletalMeshMerger.h
+D:/ProjectFolderfromGit/FirstGameProject/Plugins/SkeletalMeshMerger/Source/SkeletalMeshMerger/Private/SkeletalMeshMerger.cpp
+D:\ProjectFolderfromGit\FirstGameProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public\SkeletalMeshMerger.h
+D:/ProjectFolderfromGit/FirstGameProject/Plugins/SkeletalMeshMerger/Source/SkeletalMeshMerger/Private/SkeletalMeshMergerBPLibrary.cpp
+D:\ProjectFolderfromGit\FirstGameProject\Plugins\SkeletalMeshMerger\Source\SkeletalMeshMerger\Public\SkeletalMeshMergerBPLibrary.h
 C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\Engine\Public\SkeletalMeshMerge.h
 C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\Engine\Classes\Engine/SkeletalMeshSocket.h
 C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Inc\Engine\SkeletalMeshSocket.generated.h
@@ -12,4 +12,4 @@ C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\Core\Public\Math/UnitC
 C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\Core\Public\Math/UnitConversion.inl
 C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\Core\Public\Internationalization/PolyglotTextData.h
 C:\Program Files\Epic Games\UE_4.27\Engine\Source\Runtime\CoreUObject\Public\AssetRegistry/ARFilter.h
-D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Inc\SkeletalMeshMerger\SkeletalMeshMergerBPLibrary.generated.h
+D:\ProjectFolderfromGit\FirstGameProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Inc\SkeletalMeshMerger\SkeletalMeshMergerBPLibrary.generated.h

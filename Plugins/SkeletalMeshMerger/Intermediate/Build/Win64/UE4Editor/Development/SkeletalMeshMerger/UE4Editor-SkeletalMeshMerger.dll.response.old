@@ -1,5 +1,5 @@
 /MANIFEST:EMBED
-/MANIFESTINPUT:"C:\Program Files\Epic Games\UE_4.26\Engine\Build\Windows\Resources\Default-Win64.manifest"
+/MANIFESTINPUT:"C:\Program Files\Epic Games\UE_4.27\Engine\Build\Windows\Resources\Default-Win64.manifest"
 /NOLOGO
 /DEBUG
 /errorReport:prompt
@@ -18,10 +18,10 @@
 /ignore:4099
 /DELAYLOAD:"d3d12.dll"
 /DELAYLOAD:"DBGHELP.DLL"
-/LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\lib\x64"
-/LIBPATH:"C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\x64"
-/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.19041.0\ucrt\x64"
-/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.19041.0\um\x64"
+/LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\lib\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8\lib\um\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.22000.0\ucrt\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.22000.0\um\x64"
 /NODEFAULTLIB:"LIBCMT"
 /NODEFAULTLIB:"LIBCPMT"
 /NODEFAULTLIB:"LIBCMTD"
@@ -33,15 +33,15 @@
 /NODEFAULTLIB:"LIBCD"
 /NODEFAULTLIB:"LIBCPD"
 /FUNCTIONPADMIN
-"E:\Unreal Projects\Plugin\Intermediate\Build\Win64\PluginEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.obj"
-"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp.obj"
-"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.gen.cpp.obj"
-"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Default.rc2.res"
-"C:\Program Files\Epic Games\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\CoreUObject\UE4Editor-CoreUObject.lib"
-"C:\Program Files\Epic Games\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\Engine\UE4Editor-Engine.lib"
-"C:\Program Files\Epic Games\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\Slate\UE4Editor-Slate.lib"
-"C:\Program Files\Epic Games\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\SlateCore\UE4Editor-SlateCore.lib"
-"C:\Program Files\Epic Games\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Development\Core\UE4Editor-Core.lib"
+"D:\Unreal Engine 4\FirstProject\Intermediate\Build\Win64\FirstProjectEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.obj"
+"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.cpp.obj"
+"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Module.SkeletalMeshMerger.gen.cpp.obj"
+"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\Default.rc2.res"
+"C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Development\CoreUObject\UE4Editor-CoreUObject.lib"
+"C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Development\Engine\UE4Editor-Engine.lib"
+"C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Development\Slate\UE4Editor-Slate.lib"
+"C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Development\SlateCore\UE4Editor-SlateCore.lib"
+"C:\Program Files\Epic Games\UE_4.27\Engine\Intermediate\Build\Win64\UE4Editor\Development\Core\UE4Editor-Core.lib"
 "delayimp.lib"
 "wininet.lib"
 "rpcrt4.lib"
@@ -66,8 +66,7 @@
 "setupapi.lib"
 "dwmapi.lib"
 "imm32.lib"
-/OUT:"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Binaries\Win64\UE4Editor-SkeletalMeshMerger.dll"
-/IMPLIB:"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\UE4Editor-SkeletalMeshMerger.suppressed.lib"
-/PDB:"E:\Unreal Projects\Plugin\Plugins\SkeletalMeshMerger\Binaries\Win64\UE4Editor-SkeletalMeshMerger.pdb"
+/OUT:"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Binaries\Win64\UE4Editor-SkeletalMeshMerger.dll"
+/IMPLIB:"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Intermediate\Build\Win64\UE4Editor\Development\SkeletalMeshMerger\UE4Editor-SkeletalMeshMerger.suppressed.lib"
+/PDB:"D:\Unreal Engine 4\FirstProject\Plugins\SkeletalMeshMerger\Binaries\Win64\UE4Editor-SkeletalMeshMerger.pdb"
 /ignore:4078
-/INCLUDE:IMPLEMENT_MODULE_SkeletalMeshMerger

@@ -12,6 +12,8 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
+#include "Editor/EditorEngine.h"
+
 
 
 /*
@@ -72,6 +74,9 @@ void AEnemy::BeginPlay()
 	CombatCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	CombatCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); //기본적으로는 어떠한 것과 오버랩 되어도 무시하도록 한다.
 	CombatCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); //Pawn과 오버랩 될 때에만 반응하도록 한다.
+
+	CombatCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapBegin);
+	CombatCollision->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapEnd);
 }
 
 // Called every frame
@@ -125,13 +130,14 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 {
 	if (OtherActor) //무언가가 CombatSphere와 겹쳤을 때
 	{
-		AMain* Main = Cast<AMain>(OtherActor);
+		AMain* MainCharacter = Cast<AMain>(OtherActor);
 		{
-			if (Main) //그 겹친 무엇인가가 주인공 캐릭터라면
+			if (MainCharacter) //그 겹친 무엇인가가 주인공 캐릭터라면
 			{
-				CombatTarget = Main;
-				bOverlappingCombatSphere = true;
-				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //NPC의 동작 상태를 공격상태로 전환
+				CombatTarget = MainCharacter;	//공격 대상은 메인캐릭터
+				bOverlappingCombatSphere = true; //탐지 범위에 들어서면
+				//SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //NPC의 동작 상태를 공격상태로 전환 *Attack함수를 구현했으므로 사용 필요 없음
+				EnemyAttack(); ///NPC의 동작 상태를 공격상태로 전환
 			}
 		}
 	}
@@ -141,15 +147,15 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 {
 	if (OtherActor) //만약 CombatSphere로부터 플레이어가 떨어진다면(도망친다든지)
 	{
-		AMain* Main = Cast<AMain>(OtherActor);
+		AMain* MainCharacter = Cast<AMain>(OtherActor);
 		{
-			if (Main) 
+			if (MainCharacter)
 			{
 				bOverlappingCombatSphere = false;
 				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
 				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)
 				{
-					MoveToTarget(Main);
+					MoveToTarget(MainCharacter);
 					CombatTarget = nullptr;
 				}
 			}
@@ -168,26 +174,26 @@ void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 		AMain* MainCharacter = Cast<AMain>(OtherActor); //확인한 OtherActor를 Main타입으로 MainCharacter라는 변수에 넣어준다.
 		if (MainCharacter) //만약 닿은 것이 주인공 캐릭터라면 아래 실행.
 		{
-			if (MainCharacter->HitParticles) // Particle 이 설정되지 않은 상태에서 이를 수정하려 하면 에디터에서 크래쉬가 발생한다.
+			if (MainCharacter->BloodParticles) // Particle 이 설정되지 않은 상태에서 이를 수정하려 하면 에디터에서 크래쉬가 발생한다.
 			{
 				const USkeletalMeshSocket* HitPoint = GetMesh()->GetSocketByName("HitPoint"); //블루프린트 에디터에서 무기의 날 부분에 만든 소켓을 적 NPC를 공격할 때 유효한 타격점으로 만들 것이다.(이렇게 안 하면 무기 날 부분이 아니라 일반적으로 root로 지정되어 있는 무기의 손잡이 부분이 타격점이 되는 현상이 발생한다.) HitPoint라는 별명은 블루프린트에서 생성한 것이다.
 				if (HitPoint)
 				{
 					FVector SocketLocation = HitPoint->GetSocketLocation(GetMesh());
-					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MainCharacter->HitParticles, SocketLocation, FRotator(0.f), false);
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MainCharacter->BloodParticles, SocketLocation, FRotator(0.f), false);
 					//HitParticle이 유효한지 확인된다면 Emitter가 이 위치(적이 칼을 맞는 자리)에서 특정 파티클 시스템이 나타나도록 할 것이다.
 					//3번째 매개변수인 SocketLocation은 파티클시스템 Emitter를 무기의 위치에 발생시킬 것이다. 
 					//마지막 매개변수는 파티클 시스템이 재생된 이후이 자동으로 없어지는지 설장하는 것이다. 한번만 재생할 것이므로 false를 할 것이다.
 				}
 			}
-			if (MainCharacter->HitSound) //적을 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
+			if (MainCharacter->SmashingSound) //적을 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
 			{
-				UGameplayStatics::PlaySound2D(this, MainCharacter->HitSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.(단 soundcue 헤더파일은 따로 추가해주어야 한다. 유념!)
+				UGameplayStatics::PlaySound2D(this, MainCharacter->SmashingSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.(단 soundcue 헤더파일은 따로 추가해주어야 한다. 유념!)
 			}
 
-			if (MainCharacter->ScreamingSound) //마찬가지로 ScreamingSound 도 재생
+			if (MainCharacter->PainSound) //마찬가지로 ScreamingSound 도 재생
 			{
-				UGameplayStatics::PlaySound2D(this, MainCharacter->ScreamingSound);
+				UGameplayStatics::PlaySound2D(this, MainCharacter->PainSound);
 			}
 		}
 	}
@@ -242,7 +248,7 @@ void AEnemy::MoveToTarget(class AMain* Target)
 	}
 }
 
-void AEnemy::Attack()//적 공격시 실행할 내용
+void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 {
 	if (AIController)
 	{
@@ -251,11 +257,32 @@ void AEnemy::Attack()//적 공격시 실행할 내용
 	}
 	if (!bAttacking)	//만약 공격모션을 진행하고 있는 것이 아니라면 공격모션을 시작할 수 있음
 	{
+		int32 AttackNumber = FMath::RandRange(0, 2);//무작위 공격 형태를 위한 난수 생성
 		bAttacking = true;
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(CombatMontage, 1.2f);	//CombatMontage의 애니메이션 1.2배속으로 수행
+			
+			//AttackNumber에 따라 적 NPC는 다른 모션의 공격모션을 취할 것이다.
+			if (AttackNumber==0) AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
+			else if (AttackNumber==1) AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
+			else AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
+		}
+		if (SwingSound) //적이 무기를 휘두르는 소리 재생
+		{
+			UGameplayStatics::PlaySound2D(this, SwingSound);
+		}
 	}
 }
 
-void AEnemy::AttackEnd()//적 공격이 끝났을 때.
+void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 {
 	bAttacking = false;
+	if (bOverlappingCombatSphere) // 공격이 끝났는데 NPC의 CombatSphere에 플레이어가 겹친다면 공격을 지속해야 함
+	{
+		EnemyAttack();
+	}
+	//그렇지 않다면 공격을 중단.
 }

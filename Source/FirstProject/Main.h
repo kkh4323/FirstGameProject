@@ -64,14 +64,14 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	class UParticleSystem* HitParticles;
+	class UParticleSystem* BloodParticles;
 
 	//플레이어가 무기에 맞았을 때 소리를 내도록 한다.(비명이라든지 둔탁한 소리라든지 등등)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	class USoundCue* HitSound;
+	class USoundCue* SmashingSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	USoundCue* ScreamingSound;
+	USoundCue* PainSound;
 
 
 
