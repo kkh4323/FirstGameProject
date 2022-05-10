@@ -134,6 +134,7 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 		{
 			if (MainCharacter) //그 겹친 무엇인가가 주인공 캐릭터라면
 			{
+				MainCharacter->SetCombatTarget(this);	//적과 메인캐릭터가 CombatSphere에서 오버랩되었다면 플레이어 캐릭터는 이 적(this 포인터로, 적클래스 객체)에게 초점을 맞출 것이다.
 				CombatTarget = MainCharacter;	//공격 대상은 메인캐릭터
 				bOverlappingCombatSphere = true; //탐지 범위에 들어서면
 				//SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //NPC의 동작 상태를 공격상태로 전환 *Attack함수를 구현했으므로 사용 필요 없음
@@ -151,6 +152,7 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (MainCharacter)
 			{
+				MainCharacter->SetCombatTarget(nullptr);	//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
 				bOverlappingCombatSphere = false;
 				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
 				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)

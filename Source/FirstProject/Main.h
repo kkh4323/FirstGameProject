@@ -73,6 +73,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* PainSound;
 
+	/*
+	일정거리 안에 들어서면 플레이어가 적을 향해 자동적으로 조준점을 맞추도록 해주고 싶다.
+	*/
+	float InterpSpeed;	//플레이어가 적에게 조준점을 맞추는 속도
+	bool bInterpToEnemy; //특정조건(거리 등)을 만족하면 조준점 맞추는 작업을 진행하도록 할 것이다. 그 때 이 불 변수는 true가 되어 있어야 한다.
+	void SetInterpToEnemy(bool Interp); //매개변수로 들어오는 true 또는 false에 따라 적에게 초점을 맞추도록 하는 함수. 이 함수는 공격과 동시에 실행되어야 할 것이므로 Attack함수에 들어가야 한다.
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	class AEnemy* CombatTarget;	//초점을 맞출 대상이 있어야 한다. 당연히 적이므로 Enemy클래스의 인스턴스를 만든다.
+	FORCEINLINE void SetCombatTarget(AEnemy* Target) { CombatTarget = Target; } //초점을 맞출 대상을 설정하는 함수. 적과의 전투거리 반경, 즉 Combat Sphere와 오버랩 되었을 때 실행한다.
+
+	FRotator GetLookAtRotationYaw(FVector Target); // 플레이어가 적에게 초점을 맞추려면 그에 어느 방향으로 무엇을 향해 회전을 할 것인지 알려주어야 한다. 좌우로만 회전하므로 회전 방향은 Yaw이다.
+
+
+
+
 
 
 	//이동상태와(걷는지 뛰는지) 달리는 속도를 정한다.

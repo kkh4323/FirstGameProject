@@ -9,8 +9,10 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons.h"
+#include "Enemy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundCue.h"
@@ -71,6 +73,8 @@ AMain::AMain()
 	bRMBDown = false;
 	bPlayerMoving = false;
 
+	InterpSpeed = 10.f;
+	bInterpToEnemy = false;
 
 	//ENUM으로 만든 플레이어의 초기 상태를 나타내는 변수들 초기화(스테미너 변화 및 상태)
 	MovementStatus = EMovementStatus::EMS_Normal;
@@ -92,6 +96,24 @@ void AMain::BeginPlay()
 // Called every frame
 void AMain::Tick(float DeltaTime)
 {
+	/*
+	적을 향해 초점을 맞추는 것은 매 틱마다 이루어져야 한다. 
+	매 프레임마다 캐릭터의 회전이 부드럽게 진행되어야 하기 때문.
+	캐릭터의 회전을 포함하고 있으므로 rotate 또한 사용된다.
+	*/
+	if (bInterpToEnemy && CombatTarget) //적의 전투 반경과 플레이어가 오버랩되어 bInterpToEnemy가 true가 되고 전투의 대상이 될 적이 유효한 경우에만 아래 과정을 실행.
+	{
+		//LookAtYaw는 플레이어캐릭터가 초점을 맞춰야 할 위치로, 적이 있는 방향이다. Target의 위치를 구해 매개변수로 준다.
+		FRotator LookAtYaw = GetLookAtRotationYaw(CombatTarget->GetActorLocation()); 
+		//그러나 적을 향해 매 틱마다 서서히 방향을 전환해 초점을 맞춰야 한다. 이 과정이 없으면 1/30초만에 적에게 초점을 맞출 것이다.
+		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtYaw, DeltaTime, InterpSpeed);
+
+		SetActorRotation(InterpRotation); //플레이어의 초점을 적에게 맞춤.
+	}
+	
+
+
+
 	Super::Tick(DeltaTime);
 	//스테미너의 증가 또는 감소는 매 Tick마다 일어나는 것이다. DeltaTime(1/30초)마다 캐릭터의 달림 상태에 따라 상태바가 변하는 것을 실시간으로 나타내야 하므로.
 
@@ -204,6 +226,24 @@ void AMain::Tick(float DeltaTime)
 		;
 	}
 }
+
+
+// 플레이어가 적에게 초점을 맞추려면 그에 어느 방향으로 무엇을 향해 회전을 할 것인지 알려주어야 한다. 좌우로만 회전하므로 회전 방향은 Yaw이다.
+FRotator AMain::GetLookAtRotationYaw(FVector Target)
+{
+
+	/*
+	KismetMathLibrary의 FindLookAtRotation 함수는 시작지점(플레이어의 위치)에서 타겟이 위치한 곳의 회전값을 찾아준다. 
+	적의 위치를 알고 그 방향으로 돌게 하는 데 필요함.  
+	FindLookAtRotation 함수의 첫번째 매개변수는 플레이어의 위치, 두 번째 매개변수는 타겟 즉 적의 위치
+	*/
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target);
+	FRotator LookAtRotationYaw(0.f, LookAtRotation.Yaw, 0.f);
+	return LookAtRotationYaw; //결과적으로 플레이어가 쳐다보아야 할 회전값(방향)을 반환
+}
+
+
+
 
 // 들어오는 입력에 기능을 묶기 위한 작업들
 void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -422,6 +462,7 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 	//if (!bAttacking && !bStrongAttacking)//공격 진행 시에는 마우스를 다시 클릭하더라도 그 공격이 끝나고 나서야 공격이 진행된다.
 	if (!bAttacking) // 보다 빠른 액션 전환을 원하면 조건 하나를 없애는 게 나을 수도 있다.(타격은 없을 수도)
 	{
+		SetInterpToEnemy(true);//공격을 시작함과 동시에 적에게 초점을 맞추도록 한다.
 		bAttacking = true;
 
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다.
@@ -473,6 +514,7 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 	float WieldingSpeed1 = 1.15f, WieldingSpeed2 = 1.1f; //무기를 휘두르는 속도, 즉 애니메이션 진행 속도
 	if (!bStrongAttacking)//공격 진행 시에는 마우스를 다시 클릭하더라도 그 공격이 끝나고 나서야 공격이 진행된다. *약공격 중에는 강공격으로 전환이 가능하나 그 반대는 안 된다.
 	{
+		SetInterpToEnemy(true);//공격을 시작함과 동시에 적에게 초점을 맞추도록 한다.
 		bStrongAttacking = true;
 
 
@@ -522,6 +564,8 @@ void AMain::StrongAttackEnd() //공격 끝
 	{
 		StrongAttack();
 	}
+	//공격중이 아니라면 적에게 초점 맞추는 것을 중단.
+	SetInterpToEnemy(false);
 	bStrongAttacking = false;
 	bAttacking = false;
 }
@@ -535,6 +579,8 @@ void AMain::AttackEnd() //공격 끝
 		Attack();
 	}
 	bAttacking = false;
+	//공격중이 아니라면 적에게 초점 맞추는 것을 중단.
+	SetInterpToEnemy(false);
 	bStrongAttacking = false;
 	/*
 	공격을 하고 나면 다시 마우스를 누르기 전까지는 공격을 해서는 안 된다.if문 아래가 아니라 위에 있다면 계속 LMB가 다운된 상태로 인식되기 때문에 마우스를 누르지 않아도 공격을 계속 진행한다.
@@ -547,4 +593,10 @@ void AMain::AttackEnd() //공격 끝
 void AMain::PlaySwingSound() 
 {
 	if(WeaponEquipped) UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound); //무기를 장비하고 있는 상태라면 무기를 휘두를 때마다 휘두르는 소리가 나도록 한다.
+}
+
+
+void AMain::SetInterpToEnemy(bool Interp)
+{
+	bInterpToEnemy = Interp;
 }

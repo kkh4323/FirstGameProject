@@ -15,7 +15,6 @@ void APickUp::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	UE_LOG(LogTemp, Warning, TEXT("PickUp::OnOverlapBegin()"))
-	
 
 	if (OtherActor) 
 	{
@@ -31,8 +30,17 @@ void APickUp::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 			코인이나 폭발물 함정같이 캐릭터가 다가서면 작동하면서 없어져야 하는 요소들은 그 동작을 위한 함수가 따로 있다. : Destroy
 			액터와 액터 내부의 모든 것을 없애버리는 것. 자동으로 메모리를 관리하는 언리얼의 기능 중 하나이다.
 			*/
-			Destroy();
-		
+
+
+
+			Main->Health+=10; //<시험적인 코드. 안 되면 반드시 지울 것!>Main.cpp에 있는 플레이어 캐릭터의 체력을 가져온 것이다. 체력 10 회복. 된다!
+			/*
+			★다른 클래스에서 원하는 변수 또는 함수를 사용할 때 위와 같이 사용할 수 있다. 
+			C++ 클래스, 헤더 개념 복습 필요.
+			*/
+
+
+			Destroy();// 아이템 사라짐.
 		}
 	}
 
