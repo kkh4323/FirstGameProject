@@ -85,6 +85,9 @@ void AWeapons::Equip(AMain* Character)
 {
 	if (Character) //매개변수로 들어온 캐릭터가 NULL이 아니어야 진행
 	{
+		SetInstigator(Character->GetController());//무기에도 데미지 시스템을 구현하기 위해 필요한 '인스티게이터'(언리얼 공식문서 참고)
+
+
 		//카메라가 무기를 캐릭터 메시로 착각해 무기에 줌인이 되지 않도록 방지해야 한다.(카메라가 무기를 무시하도록 만들어야 한다.)
 		SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 		//플레이어를 제외한 다른 Pawn들에게도 마찬가지
@@ -164,6 +167,11 @@ void AWeapons::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AA
 			if (Enemy->ScreamingSound) //마찬가지로 ScreamingSound 도 재생
 			{
 				UGameplayStatics::PlaySound2D(this, Enemy->ScreamingSound); 
+			}
+
+			if (DamageTypeClass) //적 액터에 데미지 적용
+			{
+				UGameplayStatics::ApplyDamage(Enemy, Damage, WeaponInstigator, this, DamageTypeClass);
 			}
 		}
 	}

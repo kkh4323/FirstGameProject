@@ -113,4 +113,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateCollision();
 
+
+	//무기 클래스에도 데미지를 받는 시스템을 구축할 것이다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UDamageType> DamageTypeClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	AController* WeaponInstigator;
+	FORCEINLINE void SetInstigator(AController* Inst) { WeaponInstigator = Inst; }
+
 };

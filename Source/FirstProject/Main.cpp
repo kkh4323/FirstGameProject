@@ -387,8 +387,22 @@ void AMain::IncrementCoins(int32 Amount)
 }
 
 
+//플레이어 체력이 0이하가 되었을 때 수행할 함수. 죽음 상태.
+//공격 함수와 마찬가지로 죽을 때의 애니메이션 실행을 따로 만들고 불러와야 한다.
 void AMain::Die()
-{
+{	
+	int32 DeathAnimNum = FMath::RandRange(0, 1);
+	UAnimInstance* DeathAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
+	if (DeathAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
+	{
+		if (DeathAnimNum == 0)
+		{
+			DeathAnimInstance->Montage_Play(CombatMontage, 1.0f);
+			DeathAnimInstance->Montage_JumpToSection(FName("Death_1"));
+		}
+		DeathAnimInstance->Montage_Play(CombatMontage, 1.0f);
+		DeathAnimInstance->Montage_JumpToSection(FName("Death_2"));
+	}
 
 }
 
@@ -588,6 +602,19 @@ void AMain::AttackEnd() //공격 끝
 	*/
 
 }
+
+//TakeDamage함수 : 플레이어가 받는 데미지량과 플레이어에게 데미지를 적용하는 함수 등 데미지 관련 기능들이 이 함수에 내포된다.
+float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	DecrementHealth(DamageAmount);//Health 변수에 영향을 주는 DecrementHealth 함수를 호출. 데미지량을 매개변수로 받음.
+
+	return DamageAmount; // 받게 되는 데미지량을 반환
+
+}
+
+//ApplyDamage함수 : 플레이어에게 데미지를 적용시키는 함수. 데미지를 받는 액터와 데미지량, 데미지를 주는 도구와 액터, UDamageType이라는 특별한 클래스를 통해 어떤 종류의 데미지인지를 골라 매개변수로 넘긴다.
+//적이 공격을 가한 뒤 플레이어에게 데미지를 줄 것이므로 enemy.cpp에서 적 공격 시행 후 적용하도록 한다.
+
 
 
 void AMain::PlaySwingSound() 

@@ -8,8 +8,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Main.h"
 #include "Sound/SoundCue.h"
+#include "TimerManager.h"
 #include "Components/BoxComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Editor/EditorEngine.h"
@@ -45,13 +47,18 @@ AEnemy::AEnemy()
 
 	bOverlappingCombatSphere = false;
 
+	AttackMinTime = 1.5f;
+	AttackMaxTime = 3.f;
+
 	CombatCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CombatCollision")); //적의 무기가 플레이어에 대해 갖는 유효 타격 박스
 	//적의 특정 위치에 이 박스를 만들고 싶다면, 그 위치에 소켓을 붙이고 거기에 CombatCollision을 부착시키는 것이 좋다. AttachToComponent는 한 컴포넌트를 다른 컴포넌트에 부착시키는 함수이다. 이 경우에 사용.
 	CombatCollision->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("weapon_rSocket"));
 
-	Health = 75.f; //적 기본 체력
-	MaxHealth = 200.f; //적 최고 체력
+	EnemyHealth = 75.f; //적 기본 체력
+	EnemyMaxHealth = 200.f; //적 최고 체력
 	Damage = 20.f; //적 데미지
+
+	EnemyMovementStatus = EEnemyMovementStatus::EMS_Idle; //적 초기상태
 }
 
 // Called when the game starts or when spawned
@@ -98,7 +105,7 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 //어그로 반경과 공격 시작 반경에 플레이어가 '접'했음을 알림.
 void AEnemy::AgroSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor)	//무언가 인식 반경에 닿음
+	if (OtherActor && IsAlive())	//무언가 인식 반경에 닿음
 	{
 		AMain* Main = Cast<AMain>(OtherActor); //Main 은 주인공 캐릭터(형변환) 
 		if (Main)	//닿은 물체가 주인공 캐릭터이면
@@ -128,7 +135,7 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 
 void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor) //무언가가 CombatSphere와 겹쳤을 때
+	if (OtherActor && IsAlive()) //무언가가 CombatSphere와 겹쳤을 때
 	{
 		AMain* MainCharacter = Cast<AMain>(OtherActor);
 		{
@@ -152,7 +159,12 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (MainCharacter)
 			{
-				MainCharacter->SetCombatTarget(nullptr);	//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
+				if (MainCharacter->CombatTarget == this)
+				{
+					//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
+					//여러명의 적이 있을 경우 특정 하나의 적 객체와의 오버랩이 끝날 때 이 작업을 수행하기 위해 if문 안에 넣어준다.
+					MainCharacter->SetCombatTarget(nullptr);
+				}
 				bOverlappingCombatSphere = false;
 				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
 				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)
@@ -160,6 +172,9 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 					MoveToTarget(MainCharacter);
 					CombatTarget = nullptr;
 				}
+				//적 전투 반경을 벗어나면 공격 지연을 위한 타이머 진행을 멈춰야 한다.
+				//이렇게 멈춘 타이머는 플레이어가 적의 전투반경으로 다시 들어가 타이머를 다시 작동시키기 전까지는 0이 되고 카운팅을 시작하지 않는다.
+				GetWorldTimerManager().ClearTimer(AttackTimer); 
 			}
 		}
 	}
@@ -196,6 +211,11 @@ void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 			if (MainCharacter->PainSound) //마찬가지로 ScreamingSound 도 재생
 			{
 				UGameplayStatics::PlaySound2D(this, MainCharacter->PainSound);
+			}
+			if (DamageTypeClass)
+			{
+				//ApplyDamage함수 : 플레이어에게 데미지를 적용시키는 함수. 데미지를 받는 액터와 데미지량, 데미지를 주는 도구와 액터, UDamageType이라는 특별한 클래스를 통해 어떤 종류의 데미지인지를 골라 매개변수로 넘긴다.
+				UGameplayStatics::ApplyDamage(MainCharacter, Damage, AIController, this, DamageTypeClass); //Main의 TakeDamage함수를 불러와 Damage를 DamageAmount로 매개변수로서 넘겨주도록 한다. 
 			}
 		}
 	}
@@ -252,29 +272,32 @@ void AEnemy::MoveToTarget(class AMain* Target)
 
 void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 {
-	if (AIController)
+	if (IsAlive()) //살아있다면
 	{
-		AIController->StopMovement();
-		SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //AIController이 유효하다면(항상 유효함) 공격을 진행
-	}
-	if (!bAttacking)	//만약 공격모션을 진행하고 있는 것이 아니라면 공격모션을 시작할 수 있음
-	{
-		int32 AttackNumber = FMath::RandRange(0, 2);//무작위 공격 형태를 위한 난수 생성
-		bAttacking = true;
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
-		if (AnimInstance)
+		if (AIController)
 		{
-			AnimInstance->Montage_Play(CombatMontage, 1.2f);	//CombatMontage의 애니메이션 1.2배속으로 수행
-			
-			//AttackNumber에 따라 적 NPC는 다른 모션의 공격모션을 취할 것이다.
-			if (AttackNumber==0) AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
-			else if (AttackNumber==1) AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
-			else AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
+			AIController->StopMovement();
+			SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //AIController이 유효하다면(항상 유효함) 공격을 진행
 		}
-		if (SwingSound) //적이 무기를 휘두르는 소리 재생
+		if (!bAttacking)	//만약 공격모션을 진행하고 있는 것이 아니라면 공격모션을 시작할 수 있음
 		{
-			UGameplayStatics::PlaySound2D(this, SwingSound);
+			int32 AttackNumber = FMath::RandRange(0, 2);//무작위 공격 형태를 위한 난수 생성
+			bAttacking = true;
+
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+			if (AnimInstance)
+			{
+				AnimInstance->Montage_Play(CombatMontage, 1.2f);	//CombatMontage의 애니메이션 1.2배속으로 수행
+
+				//AttackNumber에 따라 적 NPC는 다른 모션의 공격모션을 취할 것이다.
+				if (AttackNumber == 0) AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
+				else if (AttackNumber == 1) AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
+				else AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
+			}
+			if (SwingSound) //적이 무기를 휘두르는 소리 재생
+			{
+				UGameplayStatics::PlaySound2D(this, SwingSound);
+			}
 		}
 	}
 }
@@ -284,7 +307,65 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 	bAttacking = false;
 	if (bOverlappingCombatSphere) // 공격이 끝났는데 NPC의 CombatSphere에 플레이어가 겹친다면 공격을 지속해야 함
 	{
+		//공격과 다음 공격 사이에 텀을 둔다.(난이도의 이유로)
+		float AttackTime = FMath::FRandRange(AttackMinTime, AttackMaxTime);
+		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::EnemyAttack, AttackTime);//다음 공격 전에 텀을 두도록 한다. 
+		//적 객체가 공격함수를 실행하기 전에 시간 지연 최소와 최대치 사이의 랜덤한 시간값인 AttackTime 만큼 공격 사이에 텀을 두는 것이다.
+		//적 전투 반경을 벗어나면 타이머 진행을 멈춰야 한다.(CombatSphereOnOverlapEnd에서 진행)
 		EnemyAttack();
 	}
 	//그렇지 않다면 공격을 중단.
+}
+
+
+//적 또한 플레이어로부터 데미지를 받아야 한다. 
+//Main과 달리 Enemy는 헬스포인트 증감이 구현된 함수가 있지 않으므로 직접 구현한다.
+float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	//적의 체력이 공격으로 인해 0이하가 되면 죽음을 실행하는 함수를 실행. 그렇지 않으면 체력만 감소.
+	if (EnemyHealth - DamageAmount <= 0.f)
+	{
+		EnemyHealth -= DamageAmount;
+		EnemyDie();
+	}
+	else
+	{
+		EnemyHealth -= DamageAmount;
+	}
+
+	return DamageAmount;
+}
+
+//적이 죽을 때 호출되는 함수. 죽음 애니메이션을 실행시키고 적 객체를 월드에서 삭제.(혹은 그냥 그대로 둘 수도 있음)
+void AEnemy::EnemyDie()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+		AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+	}
+	//적 상태 죽음상태로 전환
+	SetEnemyMovementStatus(EEnemyMovementStatus::EMS_EnemyDead);
+	//적이 죽으면 콜리젼이 비활성화 되어야 한다 : (위에서부터)무기콜리젼(무기에 달린 콜리젼)과 어그로 스피어(탐지반경), 전투콜리젼(전투시작반경), 캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐)
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //무기콜리젼(무기에 달린 콜리젼)
+	AgroSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); //어그로 스피어(탐지반경)
+	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 전투콜리젼(전투시작반경) 
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐) *CapsuleComponent.h 인클루드 해야 함.
+}
+
+
+void AEnemy::DeadEnd()
+{
+	//적이 애니메이션의 특정 상태에서 멈춰있도록 하는 기능은 Mesh에 있다. bPauseAnims가 그것.
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
+	// 위 두 함수는 적이 죽으면 애니메이션의 특정상태에서 메시가 멈춰있도록 하는 기능을 가진다.
+	// 적이 죽으면 이 함수가 호출됨으로써 그 상태로 고정한다.
+}
+
+
+bool AEnemy::IsAlive()
+{
+	return GetEnemyMovementStatus() != EEnemyMovementStatus::EMS_EnemyDead;
 }

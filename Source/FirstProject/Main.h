@@ -145,6 +145,14 @@ public:
 	int32 Coins;		//언리얼 엔진에서 주로 사용되는 정수형 자료형은 int32 자료형이다. 
 
 	void DecrementHealth(float Amount);	//체력이 줄어드는 경우
+	
+	//플레이어에게 데미지를 적용해야 한다. 적용된 데미지를 반환하는 함수를 생성할 것이다. 
+	//언리얼 엔진 자체 제공하는 함수가 있다 : TakeDamage
+	virtual float TakeDamage(float DamageAmount,struct FDamageEvent const& DamageEvent,class AController* EventInstigator,AActor* DamageCauser) override; 
+	//첫번째 매개변수는 데미지량이다. 
+	//마지막 매개면수는 데미지를 주는 다른 액터의 종류이다.
+	//언리얼엔진 공식문서의 TakeDamage 참고바람
+
 	void Die();
 
 	void IncrementCoins(int32 Amount);

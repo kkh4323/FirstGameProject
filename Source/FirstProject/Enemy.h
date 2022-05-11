@@ -20,6 +20,8 @@ enum class EEnemyMovementStatus :uint8
 	EMS_Idle UMETA(DisplayName = "Idle"),	//아무것도 안 하는 상태
 	EMS_MoveToTarget UMETA(DisplayName = "MoveToTarget"), //플레이어를 추적하는 상태
 	EMS_Attacking UMETA(DisplayName = "Attacking"), //플레이어를 공격하는 상태
+	EMS_EnemyDead UMETA(DisplayName = "EnemyDead"), //적이 죽은 상태. 적이 죽으면 이 상태로 전환한다. EnemyDie함수 내에서 발동.
+
 
 	EMS_MAX UMETA(DisplayName = "DefaultMax")
 };
@@ -38,6 +40,7 @@ public:
 	EEnemyMovementStatus EnemyMovementStatus;
 
 	FORCEINLINE void SetEnemyMovementStatus(EEnemyMovementStatus Status) { EnemyMovementStatus = Status; }
+	FORCEINLINE EEnemyMovementStatus GetEnemyMovementStatus() { return EnemyMovementStatus; }
 
 	/*
 	플레이어가 일정 반경 안에 들어오면 NPC가 이를 인지하고 플레이어를 쫒아가도록 만들 것이다.
@@ -52,14 +55,23 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	class AAIController* AIController; //AI와 관련된 기능을 담은 클래스.
+	
 
+	//전투 반경에 닿자마자 플레이어를 공격하면 게임이 너무 어려워질 수 있음. 시간차를 두고 공격하게끔 할 것임. 
+	//시간제어 관련 기능을 가진 FTimerHandle을 활용한다.
+	//시간지연의 범위는 밑의 두 변수 사이이다.
+	FTimerHandle AttackTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float AttackMinTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float AttackMaxTime;
 
 	//적이 갖는 체력
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")//세 변수 모두 인스턴스마다 블루프린트로 수정 가능하도록 정한다.
-	float Health; 
+	float EnemyHealth; 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float MaxHealth; //헬스바를 표현할 때 이 고정치 변수가 필요하다.
+	float EnemyMaxHealth; //헬스바를 표현할 때 이 고정치 변수가 필요하다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float Damage; //적이 플레이어에게 주는 데미지.
 
@@ -90,7 +102,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* SwingSound;
 
-	
+	//적 객체가 가할 데미지의 종류
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UDamageType> DamageTypeClass;
 
 	//적이 휘두르는 무기에 박스 컴포넌트를 붙여 플레이어에 대한 타격 유효범위가 되도록 만들 것이다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -159,5 +173,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EnemyAttackEnd();
+
+
+	//적 또한 플레이어로부터 공격을 받으면 데미지를 받아야 하므로 TakeDamage이용해 관련 기능 구현.
+	virtual float TakeDamage(float DamageAmount,struct FDamageEvent const& DamageEvent,class AController* EventInstigator,AActor* DamageCauser) override; 
+
+	void EnemyDie();
+
+	//적은 죽으면 죽어 누워있는 동작상태를 계속 유지해야 한다. 이를 위해 애니메이션 몽타주에서 적이 죽어 누워있는 지점에 노티파이를 생성하고 C++를 통해 그 지점에 계속 적의 애니메이션이 멈춰있도록 해주어야 한다.
+	UFUNCTION(BlueprintCallable)
+	void DeadEnd();
+
+	//적이 살아있는지 확인. 살아있을 때에만 탐지범위 내 플레이어를 인식하고 공격하는 등 활동을 하게 하기 위함. 모든 Sphere안에 활성 조건으로 들어갈 것.
+	bool IsAlive();
 
 };
