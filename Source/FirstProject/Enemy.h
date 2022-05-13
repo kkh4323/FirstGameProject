@@ -110,6 +110,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	class UBoxComponent* CombatCollision;
 
+	FTimerHandle DeathTimer;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float DeathDelay;//죽은 후에 월드에 남는 시간
+
+
+	void EnemyDecrementHealth(float Amount);
 
 
 protected:
@@ -181,10 +188,12 @@ public:
 	void EnemyDie();
 
 	//적은 죽으면 죽어 누워있는 동작상태를 계속 유지해야 한다. 이를 위해 애니메이션 몽타주에서 적이 죽어 누워있는 지점에 노티파이를 생성하고 C++를 통해 그 지점에 계속 적의 애니메이션이 멈춰있도록 해주어야 한다.
-	UFUNCTION(BlueprintCallable)
-	void DeadEnd();
+	//UFUNCTION(BlueprintCallable)
+	//void DeathEnd();
 
 	//적이 살아있는지 확인. 살아있을 때에만 탐지범위 내 플레이어를 인식하고 공격하는 등 활동을 하게 하기 위함. 모든 Sphere안에 활성 조건으로 들어갈 것.
 	bool IsAlive();
 
+
+	void Disappear();//적이 죽으면 사라지도록 하는 함수.
 };

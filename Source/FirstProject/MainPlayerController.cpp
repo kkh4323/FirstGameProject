@@ -21,4 +21,55 @@ void AMainPlayerController::BeginPlay()
 	}
 	HUDOverlay->AddToViewport();//블루프린트의 뷰포트에 HUDOverlay를 추가한다.
 	HUDOverlay->SetVisibility(ESlateVisibility::Visible);	//코드로 하면 개발자가 원하는 대로 특정 HUD를 보이거나 보이지 않게 조정할 수 있다. ESlateVisibility는 그런 용도.
+
+	
+	if (WEnemyHealthBar) // 헬스바 활성화(유효한지 확인)
+	{
+		EnemyHealthBar = CreateWidget<UUserWidget>(this, WEnemyHealthBar);
+		if (EnemyHealthBar)
+		{
+			EnemyHealthBar->AddToViewport(); //적 헬스바를 블루프린트 뷰포트에 추가.
+			EnemyHealthBar->SetVisibility(ESlateVisibility::Hidden); //뷰포트에는 있으나 보이지는 않도록 함.
+		}
+		FVector2D Alignment(0.f, 0.f);
+		EnemyHealthBar->SetAlignmentInViewport(Alignment );
+	}
+
+}
+
+void AMainPlayerController::DisplayEnemyHealthBar() //헬스바를 띄우는 함수. 
+{
+	if (EnemyHealthBar)
+	{
+		bEnemyHealthBarVisible = true;
+		EnemyHealthBar->SetVisibility(ESlateVisibility::Visible); 
+	}
+}
+void AMainPlayerController::RemoveEnemyHealthBar()
+{
+	if (EnemyHealthBar) //헬스바를 제거하는 함수.
+	{
+		bEnemyHealthBarVisible = false;
+		EnemyHealthBar->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+
+void AMainPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);//틱 함수 상속. 헬스바를 위한 틱 연산이 필요하기에 따로 만들어준다.
+	if (EnemyHealthBar)
+	{
+		//3차원 공간에서 적의 위치를 가져와 2차원 공간의 좌표로 변환시킨다.
+		FVector2D PositionInViewport;
+		ProjectWorldLocationToScreen(EnemyLocation,PositionInViewport);//3차원 공간의 특정 좌표를 가져온다. 이 경우 적의 좌표. 그러고는 2차원 좌표로 변환한다.
+		PositionInViewport.Y -= 70.f; //상태바 위치 상승.위에서 아래방향이 증가이므로 위로 올려주려면 빼쥰다.
+		
+		FVector2D SizeInViewport = FVector2D(300.f, 25.f); //체력바 표기 크기. 왼쪽 상단에서 시작한다. 첫번째 매개변수는 오른쪽으로 몇만큼의 크기인지, 두번째 매개변수는 아래쪽으로 몇만큼의 크기인지를 나타낸다.
+		//FVector2D SizeInViewport(200.f, 25.f); => 이런 방법도 있다.
+
+		EnemyHealthBar->SetPositionInViewport(PositionInViewport);
+		EnemyHealthBar->SetDesiredSizeInViewport(SizeInViewport);
+	}
+
 }

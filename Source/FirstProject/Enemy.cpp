@@ -14,15 +14,17 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
+#include "MainPlayerController.h"
 #include "Editor/EditorEngine.h"
 
 
 
 /*
-적의 이동 로직은 크게 3가지이다.
+적의 이동 로직은 크게 4가지이다.
 1. 아이들 상태(플레이어 발견못함)
 2. 추적 상태(플레이어 발견 후 추적)
 3. 공격 상태(플레이어에게 일정거리 이하로 다가와 공격)
+4. 죽음 상태(아무것도 안 하며 곧 월드에서 사라짐)
 */
 
 
@@ -59,6 +61,8 @@ AEnemy::AEnemy()
 	Damage = 20.f; //적 데미지
 
 	EnemyMovementStatus = EEnemyMovementStatus::EMS_Idle; //적 초기상태
+	DeathDelay = 10.f;
+
 }
 
 // Called when the game starts or when spawned
@@ -123,6 +127,17 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			if (Main)
 			{
+				if (Main->CombatTarget == this)
+				{
+					//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
+					//여러명의 적이 있을 경우 특정 하나의 적 객체와의 오버랩이 끝날 때 이 작업을 수행하기 위해 if문 안에 넣어준다.
+					Main->SetCombatTarget(nullptr);
+				}
+				Main->SetHasCombatTarget(false); 
+				if (Main->MainPlayerController)
+				{
+					Main->MainPlayerController->RemoveEnemyHealthBar(); // 플레이어가 적의 탐지반경 바깥으로 나온다면 적 체력상태바 표시를 없앤다.
+				}
 				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Idle); //NPC로 하여금 플레이어를 더 이상 추적하지 않고 Idle 상태로 돌아가게 함
 				if (AIController)
 				{
@@ -142,6 +157,12 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 			if (MainCharacter) //그 겹친 무엇인가가 주인공 캐릭터라면
 			{
 				MainCharacter->SetCombatTarget(this);	//적과 메인캐릭터가 CombatSphere에서 오버랩되었다면 플레이어 캐릭터는 이 적(this 포인터로, 적클래스 객체)에게 초점을 맞출 것이다.
+				MainCharacter->SetHasCombatTarget(true);
+				if (MainCharacter->MainPlayerController) //또한 적 체력상태바를 띄우도록 한다.(이렇게 띄워진 상태바는 어그로스피어를 나오면 없어지도록 한다.)
+				{
+					MainCharacter->MainPlayerController->DisplayEnemyHealthBar();
+				}
+				
 				CombatTarget = MainCharacter;	//공격 대상은 메인캐릭터
 				bOverlappingCombatSphere = true; //탐지 범위에 들어서면
 				//SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking); //NPC의 동작 상태를 공격상태로 전환 *Attack함수를 구현했으므로 사용 필요 없음
@@ -159,12 +180,6 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (MainCharacter)
 			{
-				if (MainCharacter->CombatTarget == this)
-				{
-					//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
-					//여러명의 적이 있을 경우 특정 하나의 적 객체와의 오버랩이 끝날 때 이 작업을 수행하기 위해 if문 안에 넣어준다.
-					MainCharacter->SetCombatTarget(nullptr);
-				}
 				bOverlappingCombatSphere = false;
 				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
 				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)
@@ -285,7 +300,7 @@ void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 			bAttacking = true;
 
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
-			if (AnimInstance)
+			if (AnimInstance && CombatMontage)
 			{
 				AnimInstance->Montage_Play(CombatMontage, 1.2f);	//CombatMontage의 애니메이션 1.2배속으로 수행
 
@@ -317,21 +332,55 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 	//그렇지 않다면 공격을 중단.
 }
 
+void AEnemy::EnemyDecrementHealth(float Amount)
+{
+	if (EnemyHealth - Amount <= 0.f)
+	{
+		EnemyHealth -= Amount;	//체력이 줄어들게 함.
+		EnemyDie();				//다 떨어지면 죽음. 
+	}
+	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
+	else
+	{
+		int32 ENYHitScene = FMath::RandRange(1, 3);
+			UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+			if (AnimInstance2)
+			{
+				AnimInstance2->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+				if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+				else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+				else AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			}
+		EnemyHealth -= Amount;
+	}
+}
+
 
 //적 또한 플레이어로부터 데미지를 받아야 한다. 
 //Main과 달리 Enemy는 헬스포인트 증감이 구현된 함수가 있지 않으므로 직접 구현한다.
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	//적의 체력이 공격으로 인해 0이하가 되면 죽음을 실행하는 함수를 실행. 그렇지 않으면 체력만 감소.
-	if (EnemyHealth - DamageAmount <= 0.f)
-	{
-		EnemyHealth -= DamageAmount;
-		EnemyDie();
-	}
-	else
-	{
-		EnemyHealth -= DamageAmount;
-	}
+	////적의 체력이 공격으로 인해 0이하가 되면 죽음을 실행하는 함수를 실행. 그렇지 않으면 체력만 감소.
+	//if (EnemyHealth - DamageAmount <= 0.f)
+	//{
+	//	EnemyHealth -= DamageAmount;
+	//	EnemyDie();
+	//}
+	//else
+	//{
+	//	int32 ENYHitScene = FMath::RandRange(1, 3);
+	//	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+	//	if (AnimInstance2)
+	//	{
+	//		AnimInstance2->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+	//		if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+	//		else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+	//		else AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+	//	}
+	//	EnemyHealth -= DamageAmount;
+	//}
+	
+	EnemyDecrementHealth(DamageAmount);
 
 	return DamageAmount;
 }
@@ -339,33 +388,66 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 //적이 죽을 때 호출되는 함수. 죽음 애니메이션을 실행시키고 적 객체를 월드에서 삭제.(혹은 그냥 그대로 둘 수도 있음)
 void AEnemy::EnemyDie()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Die Executed"))
+	//적 상태 죽음상태로 전환
+	SetEnemyMovementStatus(EEnemyMovementStatus::EMS_EnemyDead);
+	int32 ENYDeathScene = FMath::RandRange(1, 4);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
 	if (AnimInstance)
 	{
-		AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
-		AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+		//AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+		//AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); 
+		if (ENYDeathScene == 1)
+		{
+			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+			AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+		}
+		else if (ENYDeathScene == 2)
+		{
+			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+			AnimInstance->Montage_JumpToSection(FName("EnemyDeath2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+		}
+		else if (ENYDeathScene == 3)
+		{
+			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+			AnimInstance->Montage_JumpToSection(FName("EnemyDeath3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+		}
+		else
+		{
+			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+			AnimInstance->Montage_JumpToSection(FName("EnemyDeath4"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+		}
 	}
-	//적 상태 죽음상태로 전환
-	SetEnemyMovementStatus(EEnemyMovementStatus::EMS_EnemyDead);
+
 	//적이 죽으면 콜리젼이 비활성화 되어야 한다 : (위에서부터)무기콜리젼(무기에 달린 콜리젼)과 어그로 스피어(탐지반경), 전투콜리젼(전투시작반경), 캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐)
 	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //무기콜리젼(무기에 달린 콜리젼)
 	AgroSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); //어그로 스피어(탐지반경)
 	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 전투콜리젼(전투시작반경) 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐) *CapsuleComponent.h 인클루드 해야 함.
+	GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemy::Disappear, DeathDelay);
 }
 
 
-void AEnemy::DeadEnd()
-{
-	//적이 애니메이션의 특정 상태에서 멈춰있도록 하는 기능은 Mesh에 있다. bPauseAnims가 그것.
-	GetMesh()->bPauseAnims = true;
-	GetMesh()->bNoSkeletonUpdate = true;
-	// 위 두 함수는 적이 죽으면 애니메이션의 특정상태에서 메시가 멈춰있도록 하는 기능을 가진다.
-	// 적이 죽으면 이 함수가 호출됨으로써 그 상태로 고정한다.
-}
+//void AEnemy::DeathEnd()
+//{
+//	//적이 애니메이션의 특정 상태에서 멈춰있도록 하는 기능은 Mesh에 있다. bPauseAnims가 그것.
+//	UE_LOG(LogTemp, Warning, TEXT("Death End Executed"))
+//	//GetMesh()->bPauseAnims = true;
+//	/*GetMesh()->bNoSkeletonUpdate = true;*/
+//	// 위 두 함수는 적이 죽으면 애니메이션의 특정상태에서 메시가 멈춰있도록 하는 기능을 가진다.
+//	// 적이 죽으면 이 함수가 호출됨으로써 그 상태로 고정한다.
+//
+//	//GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemy::Disappear, DeathDelay); // 타이머가 DeathDelay에 도달하면 Disappear함수를 불러 액터를 소멸시킴.
+//	//Disappear();
+//}
 
 
 bool AEnemy::IsAlive()
 {
 	return GetEnemyMovementStatus() != EEnemyMovementStatus::EMS_EnemyDead;
+}
+
+void AEnemy::Disappear()//적이 죽은 후 월드에서 사라져 메모리를 관리함.
+{
+	Destroy();
 }

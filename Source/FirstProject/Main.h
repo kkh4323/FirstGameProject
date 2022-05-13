@@ -37,10 +37,20 @@ public:
 	// Sets default values for this character's properties
 	AMain();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bHasCombatTarget;
+	FORCEINLINE void SetHasCombatTarget(bool HasTarget) { bHasCombatTarget = HasTarget; }
+
 	TArray<FVector> PickupLocations;
 	/*레벨 내에서 아이템을 줍거나 특정 이벤트가 발생했을 때, 그 위치정보를 저장하는 기능이 있다면 편하다. 
 	이를 돕는 것이 TArray이다. 이름처럼 배열이다. 아이템을 획득할 때마다 증가하는 동적 배열.*/
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Controller")
+	class AMainPlayerController* MainPlayerController;
+
+	//적 상태바는 적 가까이(머리 위라든지)에 나타나야 안다. 그렇기에 이를 표시하기 위해선 적의 위치를 저장해두어야 한다.
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Combat")
+	FVector CombatTargetLocation; //적의 위치는 매 틱마다 바뀌므로 main의 tick함수에서 설정해주도록 한다.
 
 	UFUNCTION(BlueprintCallable) //블루프린트에서 디버깅 도구를 호출할 수 있도록 한다.	
 	/*아이템을 획득할 때마다 디버그구(sphere)가 그 위치에 나타나 위치를 알려주도록 한다.*/

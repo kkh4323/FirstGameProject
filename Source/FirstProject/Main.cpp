@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Weapons.h"
 #include "Enemy.h"
+#include "MainPlayerController.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundCue.h"
@@ -84,6 +85,9 @@ AMain::AMain()
 	StaminaDrainRate=25.f;
 	//스테미너가 감소하면서 특정지점에 달했을 때 상태바의 색깔이 변해야 한다. 그 기준점. 여기서는 최대치의 3분에 1.
 	MinSprintStamina=50.f;
+
+	bHasCombatTarget = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -91,6 +95,7 @@ void AMain::BeginPlay()
 {
 	Super::BeginPlay(); //게임 시작시 발생할 이벤트들
 
+	MainPlayerController = Cast<AMainPlayerController>(GetController()); // 화면에 표시할 필요가 있을 때마다 표시를 돕기 위함
 }
 
 // Called every frame
@@ -224,6 +229,17 @@ void AMain::Tick(float DeltaTime)
 	
 	default:
 		;
+	}
+
+
+
+	if (CombatTarget)
+	{
+		CombatTargetLocation = CombatTarget->GetActorLocation(); //적 객체의 위치를 매 틱마다 찾아 저장해두도록 한다.
+		if (MainPlayerController)
+		{
+			MainPlayerController->EnemyLocation = CombatTargetLocation; //매 틱마다 구해지는 적 위치를 상태바 위치에 활용할 수 있도록 한다.
+		}
 	}
 }
 

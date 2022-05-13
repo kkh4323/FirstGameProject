@@ -134,6 +134,10 @@ void AWeapons::Equip(AMain* Character)
 		{
 			IdleParticlesComponent->Deactivate();
 		}
+		else
+		{
+			IdleParticlesComponent->Activate();
+		}
 	}
 }
 //결과적으로 Equip 함수를 호출하면 아이템이 부착된 소켓을 플레이어 스켈레톤에 다시 부착시키는 것이다.

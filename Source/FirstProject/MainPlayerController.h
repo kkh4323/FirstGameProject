@@ -23,7 +23,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* HUDOverlay;
 
+	/*적 체력바 UI를 만든다*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<UUserWidget> WEnemyHealthBar;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* EnemyHealthBar;
+
+	bool bEnemyHealthBarVisible;
+
+	FVector EnemyLocation; //적 백터위치값을 가지는 변수.
+	
+	//적 체력상태바를 띄우거나 감추는 제어기들. bEnemyHealthBarVisible은 Display의 경우 true가, remove의 경우 false가 된다.
+	void DisplayEnemyHealthBar();
+	void RemoveEnemyHealthBar();
+
+
+
 protected:
 	virtual void BeginPlay() override; //다른 클래스들과 일치하도록 설정. protected이므로 상속관계일 때에나 이에 대한 접근이 가능하다.
 
+	virtual void Tick(float DeltaTime) override;
 };
