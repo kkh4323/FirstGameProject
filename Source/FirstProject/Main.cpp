@@ -86,7 +86,12 @@ AMain::AMain()
 	//스테미너가 감소하면서 특정지점에 달했을 때 상태바의 색깔이 변해야 한다. 그 기준점. 여기서는 최대치의 3분에 1.
 	MinSprintStamina=50.f;
 
+
 	bHasCombatTarget = false;
+
+	bMovingForward = false;
+	bMovingRight = false;
+
 
 }
 
@@ -148,8 +153,9 @@ void AMain::Tick(float DeltaTime)
 			{
 				Stamina -= DeltaStamina;
 			}
-			//shift키가 눌려있으므로 움직임의 상태는 전력질주를 하는 상태여야 한다.
-			SetMovementStatus(EMovementStatus::EMS_Sprinting);
+			//shift키가 눌려있으므로 움직임의 상태는 전력질주를 하는 상태여야 한다. 그러나 오른쪽 혹은 좌우로 움직이고 있는 상황이어야 전력질주가 활성화 된다.
+			if (bMovingForward || bMovingRight) SetMovementStatus(EMovementStatus::EMS_Sprinting);
+			else SetMovementStatus(EMovementStatus::EMS_Normal); //그렇지 않으면 일반 달리기
 		}
 		else //shift키가 눌려있지 않은 상태이다. 스태미너가 줄어들어있다면 회복해야 하고 가득 차있는 상태이면 그 상태를 유지하도록 해야 한다.
 		{
@@ -179,7 +185,9 @@ void AMain::Tick(float DeltaTime)
 			else
 			{
 				Stamina -= DeltaStamina; //스태미너 고갈이 아니면 아직은 뛸 수 있으므로 계속 스태미나 감소하며 전력질주.
-				SetMovementStatus(EMovementStatus::EMS_Sprinting);
+				if (bMovingForward || bMovingRight) SetMovementStatus(EMovementStatus::EMS_Sprinting);
+				else SetMovementStatus(EMovementStatus::EMS_Normal);
+				 /*SetMovementStatus(EMovementStatus::EMS_Sprinting);*/
 			}
 		}
 		else //shift키 안 눌려 있을 때
@@ -301,6 +309,8 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMain::MoveForward(float Value)
 {
+
+	bMovingForward = false; 
 	if ((Controller != nullptr) && (Value != 0.0f)&&(!bAttacking)&&(!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
 	{
 		//find out which way is forward
@@ -310,12 +320,17 @@ void AMain::MoveForward(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
 		
+		bMovingForward = true; 
+		//위의 조건을 모두 만족하고 움직일 때에만 true가 된다. 
+		//왜? : Tick 함수에서 매번 확인하고, 이것이 false가 되면 shift 키를 눌러도 플레이어가 제자리에서 달리는 모션을 하지 않도록 하기 위함이다.
+		//MoveRight에서도 마찬가지이다.
 	}
 }
 
 
 void AMain::MoveRight(float Value)
 {
+	bMovingRight = false;
 	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
 		//find out which way is forward
@@ -325,6 +340,7 @@ void AMain::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, Value);
 		
+		bMovingRight = true;
 	}
 }
 
@@ -366,6 +382,8 @@ void AMain::LMBDown()
 void AMain::RMBDown()
 {
 	bRMBDown = true;
+
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; // 죽은 상태라면 함수 실행 불가
 
 	if (WeaponEquipped)// 장비와 겹치지 않는다면 장비를 이비 착용하고 있는지 확인
 	{

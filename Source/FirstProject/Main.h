@@ -164,6 +164,7 @@ public:
 	//마지막 매개면수는 데미지를 주는 다른 액터의 종류이다.
 	//언리얼엔진 공식문서의 TakeDamage 참고바람
 
+	UFUNCTION(BlueprintCallable)
 	void Die();
 
 	virtual void Jump() override;
@@ -187,6 +188,10 @@ public:
 
 	/*Called for side to side input*/
 	void MoveRight(float Value);
+
+	//전후좌우로 움직이고 있는 중인지 확인
+	bool bMovingForward;
+	bool bMovingRight;
 
 
 	/*Called via input to turn at a given rate

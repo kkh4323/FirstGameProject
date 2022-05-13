@@ -340,7 +340,7 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 
 void AEnemy::EnemyDecrementHealth(float Amount)
 {
-	int32 ENYHitScene = FMath::RandRange(1, 4);
+	int32 ENYHitScene = FMath::RandRange(1, 6);
 	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
 	if (EnemyHealth - Amount <= 0.f)
 	{
@@ -363,6 +363,8 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 			if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit4"), CombatMontage);
+			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit5"), CombatMontage);
 			else AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
 		}
 		EnemyHealth -= Amount;
