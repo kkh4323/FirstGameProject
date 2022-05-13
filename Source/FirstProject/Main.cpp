@@ -539,6 +539,7 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 }
 
 
+
 void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한다.
 {
 	float WieldingSpeed1 = 1.15f, WieldingSpeed2 = 1.1f; //무기를 휘두르는 속도, 즉 애니메이션 진행 속도
@@ -563,13 +564,16 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 			{
 			case 0:
 				if (Stamina <= 50) WieldingSpeed1 = 0.5f;//플레이어 스테미너가 50 이하라면 강공격 속도가 느려지도록 한다. (아니면 이동 속도 변수를 건드려 이동속도가 느려지도록 할 수도 있다.)
+
 				AnimInstance2->Montage_Play(CombatMontage_StrongAtck, WieldingSpeed1);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance2->Montage_JumpToSection(FName("Attack_Heavy1"), CombatMontage_StrongAtck); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
 				Stamina -= 30.f; //강공격 시 스태미너 30 소모
+
 				break;
 
 			case 1:
 				if (Stamina <= 50) WieldingSpeed2 = 0.5f;
+
 				AnimInstance2->Montage_Play(CombatMontage_StrongAtck, WieldingSpeed2);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance2->Montage_JumpToSection(FName("Attack_Heavy2"), CombatMontage_StrongAtck); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
 				Stamina -= 30.f; //강공격 시 스태미너 30 소모

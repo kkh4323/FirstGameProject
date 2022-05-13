@@ -62,7 +62,7 @@ AEnemy::AEnemy()
 
 	EnemyMovementStatus = EEnemyMovementStatus::EMS_Idle; //적 초기상태
 	DeathDelay = 10.f;
-
+	bShiftKeyDown = false;	//쉬프트 키는 디폴트로 눌려져 있지 않은 상태이다.
 }
 
 // Called when the game starts or when spawned
@@ -332,9 +332,25 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 	//그렇지 않다면 공격을 중단.
 }
 
+
+
+//아래 두 함수가 하는 일 : 쉬프트 키가 눌려져 있는지 아닌지만을 전달한다.
+void AEnemy::ShiftKeyDown()
+{
+	bShiftKeyDown = true;
+}
+
+void AEnemy::ShiftKeyUp()
+{
+	bShiftKeyDown = false;
+}
+
+
+
+
 void AEnemy::EnemyDecrementHealth(float Amount)
 {
-	int32 ENYHitScene = FMath::RandRange(1, 3);
+	int32 ENYHitScene = FMath::RandRange(1, 4);
 	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
 	if (EnemyHealth - Amount <= 0.f)
 	{
@@ -344,16 +360,20 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
 	else
 	{
+		if (bShiftKeyDown) ENYHitScene = 4;
+	
 		if (AnimInstance2)
 		{
 			AnimInstance2->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
-			else AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			else AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
 		}
 		EnemyHealth -= Amount;
 	}
 }
+
 
 
 //적 또한 플레이어로부터 데미지를 받아야 한다. 

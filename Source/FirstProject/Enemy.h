@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Main.h"
 #include "GameFramework/Character.h"
 #include "Enemy.generated.h"
 
@@ -75,13 +76,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float Damage; //적이 플레이어에게 주는 데미지.
 
-
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	class UAnimMontage* CombatMontage;
 
+	//언리얼 에디터에서 sprint키로 바인딩한 shift가 눌려져 있는지 확인하는 bool변수이다.
+	bool bShiftKeyDown;
 
+	/*쉬프트 키가 눌려졌을 때, 다시 떼어졌을 때 동작을 담당하는 함수.*/
+	void ShiftKeyDown();
 
+	void ShiftKeyUp();
 
 	/*
 	적이 공격을 받았을 때 파티클 시스템을 통해 출혈효과를 만들 것이다.
