@@ -41,6 +41,9 @@ AEnemy::AEnemy()
 	*/
 	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
 	AgroSphere->SetupAttachment(GetRootComponent());
+	AgroSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Ignore); //폭탄의 경우 타입이 WorldDynamic이다. AgroSphere가 이와 겹치면 폭발해버리므로 Agrosphere로 하여금 WorldDynamic 오브젝트는 무시하게 만든다.
+
+
 	AgroSphere->InitSphereRadius(600.f); //적의 플레이어 인식 반경 초기화
 	
 	CombatSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatSphere"));

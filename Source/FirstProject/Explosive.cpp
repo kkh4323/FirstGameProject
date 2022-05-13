@@ -8,6 +8,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "Sound/SoundCue.h"
+#include "Enemy.h"
+#include "Kismet/GameplayStatics.h"
 
 AExplosive::AExplosive()
 {
@@ -30,7 +32,8 @@ void AExplosive::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 	if (OtherActor)
 	{
 		AMain* Main = Cast<AMain>(OtherActor); //OtherActor을 Main으로 변환해 Main에 저장한다. 이 OtherActor가 AMain이 아니라면 Main은 NULL이 될 것이다.
-		if (Main) //만약 오버랩 되는 것이 캐릭터라면
+		AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Main||Enemy) //만약 오버랩 되는 것이 메인캐릭터 또는 적 NPC라면
 		{
 
 			if (OverlapParticles)//OverlapParticles이 True라면
@@ -43,9 +46,7 @@ void AExplosive::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 				//PlaySound2D는 월드 Context Object이다. UObject를 첫 매개변수로 같는다. 두번째 매개변수로 soundcue가 들어간다.나머지 매개변수는 default 값을 갖고 있기에 이 두 개만 넣어주어도 괜찮다.
 				UGameplayStatics::PlaySound2D(this, OverlapSound); //SoundCue.h를 필요로 한다. 
 			}
-
-
-			Main->DecrementHealth(Damage);//cast한 결과가 Main 형이 맞다면 : Main이 explosive의 객체와 겹쳤을 때(즉 함정에 걸렸을 때) 체력이 50 깎이도록 한다.
+			UGameplayStatics::ApplyDamage(OtherActor, Damage, nullptr, this, DamageTypeClass);
 		
 			/*
 			코인이나 폭발물 함정같이 캐릭터가 다가서면 작동하면서 없어져야 하는 요소들은 그 동작을 위한 함수가 따로 있다. : Destroy
