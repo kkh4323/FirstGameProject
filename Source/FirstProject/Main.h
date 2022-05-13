@@ -12,7 +12,7 @@ enum class EMovementStatus : uint8
 {
 	EMS_Normal UMETA(DisplayName = "Normal"),
 	EMS_Sprinting UMETA(DisplayName = "Sprinting"),
-
+	EMS_Dead UMETA(DisplayName = "Dead"),
 	EMS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
@@ -166,6 +166,8 @@ public:
 
 	void Die();
 
+	virtual void Jump() override;
+
 	void IncrementCoins(int32 Amount);
 
 
@@ -254,6 +256,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlaySwingSound(); //무기 휘두르는 소리
 
-
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
 
 };

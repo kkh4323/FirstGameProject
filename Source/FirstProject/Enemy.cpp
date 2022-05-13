@@ -62,7 +62,8 @@ AEnemy::AEnemy()
 
 	EnemyMovementStatus = EEnemyMovementStatus::EMS_Idle; //적 초기상태
 	DeathDelay = 10.f;
-	bShiftKeyDown = false;	//쉬프트 키는 디폴트로 눌려져 있지 않은 상태이다.
+	bHasValidTarget = false;	
+	//bShift = false;
 }
 
 // Called when the game starts or when spawned
@@ -127,6 +128,7 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			if (Main)
 			{
+				bHasValidTarget = false; //탐색범위 바깥으로 나가면 적이 플레이어를 더이상 유효한 타겟으로 보지 않음.
 				if (Main->CombatTarget == this)
 				{
 					//적과 메인캐릭터가 전투반경에서 떨어졌다면 플레이어 캐릭터는 초점 대상을 더이상 enemy객체로 지정하지 않음(nullptr)
@@ -156,6 +158,7 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 		{
 			if (MainCharacter) //그 겹친 무엇인가가 주인공 캐릭터라면
 			{
+				bHasValidTarget = true; //플레이어가 적에게 유효한 타겟임을 확인
 				MainCharacter->SetCombatTarget(this);	//적과 메인캐릭터가 CombatSphere에서 오버랩되었다면 플레이어 캐릭터는 이 적(this 포인터로, 적클래스 객체)에게 초점을 맞출 것이다.
 				MainCharacter->SetHasCombatTarget(true);
 				if (MainCharacter->MainPlayerController) //또한 적 체력상태바를 띄우도록 한다.(이렇게 띄워진 상태바는 어그로스피어를 나오면 없어지도록 한다.)
@@ -287,7 +290,7 @@ void AEnemy::MoveToTarget(class AMain* Target)
 
 void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 {
-	if (IsAlive()) //살아있다면
+	if (IsAlive() && bHasValidTarget) //살아있다면, 그리고 유효한 타겟을 갖고 있다면(플레이어 캐릭터를)
 	{
 		if (AIController)
 		{
@@ -334,19 +337,6 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 
 
 
-//아래 두 함수가 하는 일 : 쉬프트 키가 눌려져 있는지 아닌지만을 전달한다.
-void AEnemy::ShiftKeyDown()
-{
-	bShiftKeyDown = true;
-}
-
-void AEnemy::ShiftKeyUp()
-{
-	bShiftKeyDown = false;
-}
-
-
-
 
 void AEnemy::EnemyDecrementHealth(float Amount)
 {
@@ -360,7 +350,12 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
 	else
 	{
-		if (bShiftKeyDown) ENYHitScene = 4;
+		/*bShift = AMain().bShiftKeyDown;
+		if (bShift)
+		{
+			ENYHitScene = 4;
+			Amount += 30;
+		}*/
 	
 		if (AnimInstance2)
 		{

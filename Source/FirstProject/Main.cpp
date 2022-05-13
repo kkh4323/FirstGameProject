@@ -122,6 +122,9 @@ void AMain::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	//스테미너의 증가 또는 감소는 매 Tick마다 일어나는 것이다. DeltaTime(1/30초)마다 캐릭터의 달림 상태에 따라 상태바가 변하는 것을 실시간으로 나타내야 하므로.
 
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; //매 틱마다 플레이어가 죽은 상태인지 확인, 죽었으면 아무것도 실행 못함.
+
+
 	//DeltaStamina는 DeltaTime마다 증가 또는 감소해야 하는 스테미너의 변화값을 의미한다.
 	float DeltaStamina = StaminaDrainRate * DeltaTime;
 
@@ -268,7 +271,7 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	//점프
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMain::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	//전력질주
@@ -298,7 +301,7 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMain::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f)&&(!bAttacking)&&(!bStrongAttacking)) //공격하고 있을 땐 움직이지 않도록 한다.
+	if ((Controller != nullptr) && (Value != 0.0f)&&(!bAttacking)&&(!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -313,7 +316,7 @@ void AMain::MoveForward(float Value)
 
 void AMain::MoveRight(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking))
+	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -341,6 +344,8 @@ void AMain::LookUpAtRate(float Rate)
 void AMain::LMBDown()
 {
 	bLMBDown = true;
+
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; // 죽은 상태라면 함수 실행 불가
 
 	if (ActiveOverlappingItem) // 장비와 겹침상태임을 나타내는 변수가 true라면 그 장비가 무기타입인지 확인한다. 맞다면 장비를 장착하게 한다.
 	{
@@ -407,6 +412,7 @@ void AMain::IncrementCoins(int32 Amount)
 //공격 함수와 마찬가지로 죽을 때의 애니메이션 실행을 따로 만들고 불러와야 한다.
 void AMain::Die()
 {	
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; //이미 죽어있는 상태이면 두번 다시 죽음 애니메이션을 실행하지 않도록 한다. 이것이 없을 경우 죽음 이후에 적에게 공격받으면 또 이 애니메이션을 실행한다.
 	int32 DeathAnimNum = FMath::RandRange(0, 1);
 	UAnimInstance* DeathAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
 	if (DeathAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
@@ -419,9 +425,29 @@ void AMain::Die()
 		DeathAnimInstance->Montage_Play(CombatMontage, 1.0f);
 		DeathAnimInstance->Montage_JumpToSection(FName("Death_2"));
 	}
+	SetMovementStatus(EMovementStatus::EMS_Dead);
+}
+
+
+void AMain::DeathEnd()
+{
+	// 애니메이션의 특정 상태에서 멈춰있도록 하는 기능은 Mesh에 있다. bPauseAnims가 그것.
+	UE_LOG(LogTemp, Warning, TEXT("Death End Executed"))
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
+	 /*위 두 함수는 적이 죽으면 애니메이션의 특정상태에서 메시가 멈춰있도록 하는 기능을 가진다.
+	 플레이어가 죽으면 이 함수가 호출됨으로써 그 상태로 고정한다.*/
 
 }
 
+//Jump는 character.h에 이미 있는 함수로, main에서 상속받아 활용한다.
+void AMain::Jump()
+{
+	if (MovementStatus != EMovementStatus::EMS_Dead) //플레이어가 살아있는 상태에서만 jump가 가능하다.
+	{
+		Super::Jump();
+	}
+}
 
 /*캐릭터 이동 상태를 확인하는 함수*/
 void AMain::SetMovementStatus(EMovementStatus Status) 
@@ -490,7 +516,7 @@ void AMain::SetWeaponEquipped(AWeapons* WeaponToSet)
 void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한다.
 {
 	//if (!bAttacking && !bStrongAttacking)//공격 진행 시에는 마우스를 다시 클릭하더라도 그 공격이 끝나고 나서야 공격이 진행된다.
-	if (!bAttacking) // 보다 빠른 액션 전환을 원하면 조건 하나를 없애는 게 나을 수도 있다.(타격은 없을 수도)
+	if (!bAttacking && MovementStatus != EMovementStatus::EMS_Dead) // 보다 빠른 액션 전환을 원하면 조건 하나를 없애는 게 나을 수도 있다.(타격은 없을 수도) 또한 플레이어 상태가 죽음 상태가 아니어야 공격을 진행할 수 있다.
 	{
 		SetInterpToEnemy(true);//공격을 시작함과 동시에 적에게 초점을 맞추도록 한다.
 		bAttacking = true;
@@ -624,9 +650,33 @@ void AMain::AttackEnd() //공격 끝
 }
 
 //TakeDamage함수 : 플레이어가 받는 데미지량과 플레이어에게 데미지를 적용하는 함수 등 데미지 관련 기능들이 이 함수에 내포된다.
-float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) 
 {
-	DecrementHealth(DamageAmount);//Health 변수에 영향을 주는 DecrementHealth 함수를 호출. 데미지량을 매개변수로 받음.
+	//DecrementHealth(DamageAmount);//Health 변수에 영향을 주는 DecrementHealth 함수를 호출. 데미지량을 매개변수로 받음. 이 함수를 써도 되지만 여기서는 추가로 DamageCauser를 구현하기 위해 풀어서 쓴다.
+
+	if (Health - DamageAmount <= 0.f)
+	{
+		Health -= DamageAmount;	//체력이 줄어들게 함.
+		Die();				//다 떨어지면 죽음. 
+
+
+		//DamageCauser은 데미지의 원인이 되는 것, 즉 여기서는 적 NPC이다.
+		if (DamageCauser)
+		{
+			AEnemy* Enemy = Cast<AEnemy>(DamageCauser);
+			if (Enemy)
+			{
+				Enemy->bHasValidTarget = false;
+			}
+		}
+	}
+	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
+	else
+	{
+		Health -= DamageAmount;
+	}
+
+
 
 	return DamageAmount; // 받게 되는 데미지량을 반환
 

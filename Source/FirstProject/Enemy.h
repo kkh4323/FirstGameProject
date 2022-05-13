@@ -79,8 +79,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	class UAnimMontage* CombatMontage;
 
-	//언리얼 에디터에서 sprint키로 바인딩한 shift가 눌려져 있는지 확인하는 bool변수이다.
-	bool bShiftKeyDown;
+	//bool bShift;
+	bool bHasValidTarget; // 유효한 공격 대상을 가지는지 판단하는 기준으로, 이것이 false이면 적은 플레이어를 더이상 공격대상으로 생각하지 않고 공격을 중단한다.
 
 	/*쉬프트 키가 눌려졌을 때, 다시 떼어졌을 때 동작을 담당하는 함수.*/
 	void ShiftKeyDown();
