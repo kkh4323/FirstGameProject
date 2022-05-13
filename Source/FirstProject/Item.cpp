@@ -64,18 +64,26 @@ void AItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 {
 	UE_LOG(LogTemp, Warning, TEXT("Super::OnOverlapBegin()"))
 
-	/*OnOverlapBegin에 Particle System이 스폰되도록 할 것이다. 어떻게 Particle을 소환할까? 일단 NULL이 아니어야 한다*/
+
+	//겹치는 액터에 대한 조건이 아무것도 없기 때문에 아래 코드를 활성화 하면 닿는 것이 NPC든 플레이어든 그냥 아무 액터든 다 동작하게 된다.
+		//이 클래스를 상속하는 픽업이나 폭발물들도 그러한 것.
+		//그러므로 여기서 생성된걸 상속하게 하는 것보다는 자식클래스 내에서 일일이 만들어 주는 것이 나음.
+
+	/*
+	//OnOverlapBegin에 Particle System이 스폰되도록 할 것이다. 어떻게 Particle을 소환할까? 일단 NULL이 아니어야 한다
 	if (OverlapParticles)//OverlapParticles이 True라면
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), OverlapParticles, GetActorLocation(), FRotator(0.f), true);//UWorld헤더파일을 필요로 하는 함수이다. 이 또한 인클루드 한다.
 	}
-	/*액터를 없애버리기 전에 어떤 효과를 넣고 싶다면? 그것은 블루프린트에서 해야 하는 것 : Overlap Particle 에서 emit할 효과를 넣어주어야 한다.*/
+	//액터를 없애버리기 전에 어떤 효과를 넣고 싶다면? 그것은 블루프린트에서 해야 하는 것 : Overlap Particle 에서 emit할 효과를 넣어주어야 한다.
 	if (OverlapSound)
 	{
-		/*PlaySound2D는 월드 Context Object이다. UObject를 첫 매개변수로 같는다. 두번째 매개변수로 soundcue가 들어간다.나머지 매개변수는 default
-		값을 갖고 있기에 이 두 개만 넣어주어도 괜찮다.*/
+		//PlaySound2D는 월드 Context Object이다. UObject를 첫 매개변수로 같는다. 두번째 매개변수로 soundcue가 들어간다.나머지 매개변수는 default
+		값을 갖고 있기에 이 두 개만 넣어주어도 괜찮다.
 		UGameplayStatics::PlaySound2D(this, OverlapSound); //SoundCue.h를 필요로 한다. 
 	}
+	*/
+
 
 }
 
