@@ -404,7 +404,7 @@ void AMain::RMBUp()
 
 
 //플레이어 캐릭터의 체력이 줄어들 때 발생할 사건을 정한다.(사망이라든지)
-void AMain::DecrementHealth(float Amount) 
+void AMain::DecrementHealth(float Amount) //Amount는 적이나 장애물로부터 받는 피해량이다. 이 피해량 정도에 따라 플레이어의 hit 모션을 다르게 할 수 있다.
 {
 	if (Health - Amount <= 0.f)
 	{

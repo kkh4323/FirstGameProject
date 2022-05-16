@@ -203,7 +203,6 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 
 
 
-
 void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	//NPC의 무기와 overlap될 다른 액터를 check할 것이다. 여기서는 당연히 플레이어 캐릭터인 main이 될 것이다. enemy가 되는 weapons.cpp에서와는 다르다.
