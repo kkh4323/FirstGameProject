@@ -83,6 +83,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* PainSound;
 
+	//플레이어 사망 시 소리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* DeathSound;
+
 	/*
 	일정거리 안에 들어서면 플레이어가 적을 향해 자동적으로 조준점을 맞추도록 해주고 싶다.
 	*/

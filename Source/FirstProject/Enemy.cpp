@@ -270,11 +270,11 @@ void AEnemy::MoveToTarget(class AMain* Target)
 	{
 		/*UE_LOG(LogTemp, Warning, TEXT("MoveToTarget()"));*/ //겹쳤을 때 풀력로그에 출력할 것
 		FAIMoveRequest MoveRequest; 
-		MoveRequest.SetGoalActor(Target); //GoalActor은 MoveRequest 구조체의 멤버함수로, 타겟 액터, 즉 여기서는 메인캐릭터가 된다.
+		MoveRequest.SetGoalActor(Target); //GoalActor은 MoveRequest 구조체의 멤버함수로, 타겟 액터를 매개변수로 받는다. Main이 Target이 된다.
 		MoveRequest.SetAcceptanceRadius(1.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
 
 		FNavPathSharedPtr NavPath;
-		AIController->MoveTo(MoveRequest, &NavPath); //MoveTo는 AI의 제어와 관련된 함수로 매개변수로 들어가는 것의 종류가 많다. 이는 언리얼 엔진 공식문서를 참고하도록.
+		AIController->MoveTo(MoveRequest, &NavPath); //MoveTo는 AI로 하여금 특정 위치로 이동하도록 하는 함수이다. 매개변수로 (MoveRequest로 지정된) 메인에 대한 설명을 받아 그 위치로 이동을 명하는 것이다. 이에 관해 언리얼 엔진 공식문서를 참고하도록.
 		//AI와 캐릭터간 OverlapBegin이 되면서 MoveToTarget이 호출되고 MoveTo가 실행되고 Target을 Main, 즉 주인공캐릭터로 잡으면서 따라오게 되는 것이다.
 		
 		//TArray<FNavPathPoint> PathPoints = NavPath->GetPathPoints();
@@ -342,8 +342,9 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 
 void AEnemy::EnemyDecrementHealth(float Amount)
 {
-	int32 ENYHitScene = FMath::RandRange(1, 6);
+	int32 ENYHitScene = FMath::RandRange(1, 10);
 	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
+	if (Amount > 50) ENYHitScene = 9;
 	if (EnemyHealth - Amount <= 0.f)
 	{
 		EnemyHealth -= Amount;	//체력이 줄어들게 함.
@@ -358,18 +359,22 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 			ENYHitScene = 4;
 			Amount += 30;
 		}*/
-	
+
 		if (AnimInstance2)
 		{
 			AnimInstance2->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
-			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit4"), CombatMontage);
-			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit5"), CombatMontage);
+			else if (ENYHitScene == 4)AnimInstance2->Montage_JumpToSection(FName("Hit4"), CombatMontage);
+			else if (ENYHitScene == 5)AnimInstance2->Montage_JumpToSection(FName("Hit5"), CombatMontage);
+			else if (ENYHitScene == 6)AnimInstance2->Montage_JumpToSection(FName("Hit6"), CombatMontage);
+			else if (ENYHitScene == 7)AnimInstance2->Montage_JumpToSection(FName("Hit7"), CombatMontage);
+			else if (ENYHitScene == 8)AnimInstance2->Montage_JumpToSection(FName("Hit8"), CombatMontage);
 			else AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
 		}
 		EnemyHealth -= Amount;
+		bAttacking = false;
 	}
 }
 

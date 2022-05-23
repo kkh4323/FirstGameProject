@@ -404,19 +404,19 @@ void AMain::RMBUp()
 
 
 //플레이어 캐릭터의 체력이 줄어들 때 발생할 사건을 정한다.(사망이라든지)
-void AMain::DecrementHealth(float Amount) //Amount는 적이나 장애물로부터 받는 피해량이다. 이 피해량 정도에 따라 플레이어의 hit 모션을 다르게 할 수 있다.
-{
-	if (Health - Amount <= 0.f)
-	{
-		Health -= Amount;	//체력이 줄어들게 함.
-		Die();				//다 떨어지면 죽음. 
-	}
-	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
-	else
-	{
-		Health -= Amount;
-	}
-}
+//void AMain::DecrementHealth(float Amount) //Amount는 적이나 장애물로부터 받는 피해량이다. 이 피해량 정도에 따라 플레이어의 hit 모션을 다르게 할 수 있다.
+//{
+//	if (Health - Amount <= 0.f)
+//	{
+//		Health -= Amount;	//체력이 줄어들게 함.
+//		Die();				//다 떨어지면 죽음. 
+//	}
+//	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
+//	else
+//	{
+//		Health -= Amount;
+//	}
+//}
 
 
 //플레이어 캐릭터가 아이템을 얻을 때 발생할 사건의 정의(동전줍기라든지)
@@ -431,19 +431,17 @@ void AMain::IncrementCoins(int32 Amount)
 void AMain::Die()
 {	
 	if (MovementStatus == EMovementStatus::EMS_Dead) return; //이미 죽어있는 상태이면 두번 다시 죽음 애니메이션을 실행하지 않도록 한다. 이것이 없을 경우 죽음 이후에 적에게 공격받으면 또 이 애니메이션을 실행한다.
-	int32 DeathAnimNum = FMath::RandRange(0, 1);
+	int32 DeathAnimNum = FMath::RandRange(0, 2);
 	UAnimInstance* DeathAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
 	if (DeathAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
 	{
-		if (DeathAnimNum == 0)
-		{
-			DeathAnimInstance->Montage_Play(CombatMontage, 1.0f);
-			DeathAnimInstance->Montage_JumpToSection(FName("Death_1"));
-		}
 		DeathAnimInstance->Montage_Play(CombatMontage, 1.0f);
-		DeathAnimInstance->Montage_JumpToSection(FName("Death_2"));
+		if (DeathAnimNum == 0) DeathAnimInstance->Montage_JumpToSection(FName("Death_1"));
+		else if (DeathAnimNum == 1) DeathAnimInstance->Montage_JumpToSection(FName("Death_2"));
+		else DeathAnimInstance->Montage_JumpToSection(FName("Death_3"));
 	}
 	SetMovementStatus(EMovementStatus::EMS_Dead);
+	UGameplayStatics::PlaySound2D(this, this->DeathSound);
 }
 
 
@@ -691,6 +689,30 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
 	else
 	{
+		int32 HitAnimNum = FMath::RandRange(0, 2);
+		UAnimInstance* HitAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
+		if (DamageAmount >= 100) HitAnimNum = 3; //200이상의 데미지를 받으면 뒤로 튕겨져 가는 HitHard 애니메이션 재생
+		else if (DamageAmount < 50)
+		{
+			Health -= DamageAmount;
+			return 0; // 받은 데미지가 50이하이면 아무런 반응 안 함.
+		}
+		if (HitAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
+		{
+
+			UGameplayStatics::PlaySound2D(this, this->SmashingSound);	//비명과 맞는 소리
+			UGameplayStatics::PlaySound2D(this, this->PainSound);
+
+			HitAnimInstance->Montage_Play(CombatMontage, 1.5f);
+			if (HitAnimNum == 0) HitAnimInstance->Montage_JumpToSection(FName("Hit1"));
+			else if (HitAnimNum == 1) HitAnimInstance->Montage_JumpToSection(FName("Hit2"));
+			else if (HitAnimNum == 2)HitAnimInstance->Montage_JumpToSection(FName("Hit3"));
+			else if (HitAnimNum == 3)HitAnimInstance->Montage_JumpToSection(FName("HitHard"));
+
+			bStrongAttacking = false;	//Hit 된 후 공격 중지하는 에러 방지용 코드
+			bAttacking = false;			//Hit 된 후 공격 중지하는 에러 방지용 코드
+			SetInterpToEnemy(false);	//Hit 된 후 공격 중지하는 에러 방지용 코드
+		}
 		Health -= DamageAmount;
 	}
 
