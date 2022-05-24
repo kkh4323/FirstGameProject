@@ -87,6 +87,8 @@ public:
 
 	void ShiftKeyUp();
 
+	FTimerHandle TimerHandle;
+
 	/*
 	적이 공격을 받았을 때 파티클 시스템을 통해 출혈효과를 만들 것이다.
 	enemy 헤더 파일에 이를 구현하는 이유는 적 클래스를 통해 나오는 객체마다 다른 종류의 파티클 시스템을 적용할 수 있도록 하기 위함이다.
