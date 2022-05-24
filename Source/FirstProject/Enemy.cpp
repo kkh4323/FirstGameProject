@@ -67,6 +67,8 @@ AEnemy::AEnemy()
 	DeathDelay = 10.f;
 	bHasValidTarget = false;	
 	//bShift = false;
+
+	bPainSoundOnGoing = false;
 }
 
 // Called when the game starts or when spawned
@@ -258,15 +260,15 @@ void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 					//마지막 매개변수는 파티클 시스템이 재생된 이후이 자동으로 없어지는지 설장하는 것이다. 한번만 재생할 것이므로 false를 할 것이다.
 				}
 			}
-			if (MainCharacter->SmashingSound) //적을 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
+			if (MainCharacter->SmashingSound) //플레이어를 타격하고 파티클까지 실행되는 것까지 확인한 후 HitSound 재생
 			{
 				UGameplayStatics::PlaySound2D(this, MainCharacter->SmashingSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.(단 soundcue 헤더파일은 따로 추가해주어야 한다. 유념!)
 			}
 
-			if (MainCharacter->PainSound) //마찬가지로 ScreamingSound 도 재생
-			{
-				UGameplayStatics::PlaySound2D(this, MainCharacter->PainSound);
-			}
+			//if (MainCharacter->PainSound) //마찬가지로 ScreamingSound 도 재생
+			//{
+			//	UGameplayStatics::PlaySound2D(this, MainCharacter->PainSound);
+			//}
 			if (DamageTypeClass)
 			{
 				//ApplyDamage함수 : 플레이어에게 데미지를 적용시키는 함수. 데미지를 받는 액터와 데미지량, 데미지를 주는 도구와 액터, UDamageType이라는 특별한 클래스를 통해 어떤 종류의 데미지인지를 골라 매개변수로 넘긴다.
@@ -347,20 +349,19 @@ void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 				//AttackNumber에 따라 적 NPC는 다른 모션의 공격모션을 취할 것이다.
 				if (AttackNumber == 0)
 				{
-					//UGameplayStatics::PlaySound2D(this, SwingSound);
+					UGameplayStatics::PlaySound2D(this, EnemyBattleCry1);
 					AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
 				}
 
 				else if (AttackNumber == 1)
 				{
-					//UGameplayStatics::PlaySound2D(this, SwingSound);
-					
+					UGameplayStatics::PlaySound2D(this, EnemyBattleCry2);
 					AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
 				}
 					
 				else
 				{
-					//UGameplayStatics::PlaySound2D(this, SwingSound2);
+					UGameplayStatics::PlaySound2D(this, EnemyBattleCry3);
 					AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
 				}
 					
@@ -402,6 +403,7 @@ void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 	if (EnemyHealth - Amount <= 0.f)
 	{
 		EnemyHealth -= Amount;	//체력이 줄어들게 함.
+		UGameplayStatics::PlaySound2D(this, HitSound);
 		EnemyDie(DamageCauser);				//다 떨어지면 죽음. 
 	}
 	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
@@ -431,7 +433,9 @@ void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 				AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
 			}
 		}
+		UGameplayStatics::PlaySound2D(this, HitSound);
 		EnemyHealth -= Amount;
+		if (EnemyHealth > 0.f) UGameplayStatics::PlaySound2D(this, ScreamingSound);
 		bAttacking = false;
 	}
 }
@@ -483,24 +487,28 @@ void AEnemy::EnemyDie(AActor* Causer) //Causer은 이 적을 죽게 한 원인, 즉 무엇으
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			UGameplayStatics::PlaySound2D(this, EnemyDeathSound);
 			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else if (ENYDeathScene == 2)
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			UGameplayStatics::PlaySound2D(this, EnemyDeathSound1);
 			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else if (ENYDeathScene == 3)
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			UGameplayStatics::PlaySound2D(this, EnemyDeathSound2);
 			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath4"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			UGameplayStatics::PlaySound2D(this, EnemyDeathSound3);
 			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}

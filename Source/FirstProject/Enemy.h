@@ -103,6 +103,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* ScreamingSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyDeathSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyDeathSound1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyDeathSound2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyDeathSound3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyBattleCry1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyBattleCry2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemyBattleCry3;
+
 	//적이 무기를 휘두를 때 나오는 소리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* SwingSound;
@@ -165,6 +184,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bOverlappingCombatSphere; //NPC가 플레이어를 공격하는 도중 플레이어가 달아나 버려도 NPC는 진행하던 공격은 끝내고 플레이어를 추적하게끔 할 것임. 이 때 필요한 변수.
+
+	bool bPainSoundOnGoing;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
 	AMain* CombatTarget;

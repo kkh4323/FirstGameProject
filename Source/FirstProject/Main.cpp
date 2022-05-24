@@ -554,16 +554,19 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 			switch (Section)
 			{
 			case 0:
+				UGameplayStatics::PlaySound2D(this, this->BattleCry1);
 				AnimInstance->Montage_Play(CombatMontage, 0.9f);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance->Montage_JumpToSection(FName("Attack_1"), CombatMontage); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
 				break;
 
 			case 1:
+				UGameplayStatics::PlaySound2D(this, this->BattleCry2);
 				AnimInstance->Montage_Play(CombatMontage, 0.9f);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance->Montage_JumpToSection(FName("Attack_2"), CombatMontage); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
 				break;
 
 			case 2:
+				UGameplayStatics::PlaySound2D(this, this->BattleCry3);
 				AnimInstance->Montage_Play(CombatMontage, 0.7f);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance->Montage_JumpToSection(FName("Attack_3"), CombatMontage); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
 				break;
@@ -609,6 +612,7 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 
 				AnimInstance2->Montage_Play(CombatMontage_StrongAtck, WieldingSpeed1);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance2->Montage_JumpToSection(FName("Attack_Heavy1"), CombatMontage_StrongAtck); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
+				UGameplayStatics::PlaySound2D(this, this->BattleCry4);
 				Stamina -= 30.f; //강공격 시 스태미너 30 소모
 
 				break;
@@ -618,6 +622,7 @@ void AMain::StrongAttack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 
 
 				AnimInstance2->Montage_Play(CombatMontage_StrongAtck, WieldingSpeed2);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance2->Montage_JumpToSection(FName("Attack_Heavy2"), CombatMontage_StrongAtck); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
+				UGameplayStatics::PlaySound2D(this, this->BattleCry5);
 				Stamina -= 30.f; //강공격 시 스태미너 30 소모
 				break;
 
@@ -692,22 +697,38 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 		int32 HitAnimNum = FMath::RandRange(0, 2);
 		UAnimInstance* HitAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
 		if (DamageAmount >= 100) HitAnimNum = 3; //200이상의 데미지를 받으면 뒤로 튕겨져 가는 HitHard 애니메이션 재생
-		else if (DamageAmount < 50)
+		else if (DamageAmount < 30)
 		{
 			Health -= DamageAmount;
-			return 0; // 받은 데미지가 50이하이면 아무런 반응 안 함.
+			return 0; // 받은 데미지가 30미만이면 아무런 반응 안 함.
 		}
 		if (HitAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
 		{
 
-			UGameplayStatics::PlaySound2D(this, this->SmashingSound);	//비명과 맞는 소리
-			UGameplayStatics::PlaySound2D(this, this->PainSound);
+			UGameplayStatics::PlaySound2D(this, this->SmashingSound);	//맞는 소리
+			
+			
 
-			HitAnimInstance->Montage_Play(CombatMontage, 1.5f);
-			if (HitAnimNum == 0) HitAnimInstance->Montage_JumpToSection(FName("Hit1"));
-			else if (HitAnimNum == 1) HitAnimInstance->Montage_JumpToSection(FName("Hit2"));
-			else if (HitAnimNum == 2)HitAnimInstance->Montage_JumpToSection(FName("Hit3"));
-			else if (HitAnimNum == 3)HitAnimInstance->Montage_JumpToSection(FName("HitHard"));
+			HitAnimInstance->Montage_Play(CombatMontage, 2.f);
+			if (HitAnimNum == 0)
+			{
+				HitAnimInstance->Montage_JumpToSection(FName("Hit1"));
+				UGameplayStatics::PlaySound2D(this, this->PainSound);
+			}
+
+			else if (HitAnimNum == 1)
+			{
+				HitAnimInstance->Montage_JumpToSection(FName("Hit2"));
+			}
+			else if (HitAnimNum == 2)
+			{
+				HitAnimInstance->Montage_JumpToSection(FName("Hit3"));
+			}
+			else if (HitAnimNum == 3)
+			{
+				HitAnimInstance->Montage_JumpToSection(FName("HitHard"));
+				UGameplayStatics::PlaySound2D(this, this->GreaterPainSound);
+			}
 
 			bStrongAttacking = false;	//Hit 된 후 공격 중지하는 에러 방지용 코드
 			bAttacking = false;			//Hit 된 후 공격 중지하는 에러 방지용 코드

@@ -83,9 +83,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* PainSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* GreaterPainSound;
+
 	//플레이어 사망 시 소리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* DeathSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* BattleCry1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* BattleCry2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* BattleCry3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* BattleCry4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* BattleCry5;
 
 	/*
 	일정거리 안에 들어서면 플레이어가 적을 향해 자동적으로 조준점을 맞추도록 해주고 싶다.
