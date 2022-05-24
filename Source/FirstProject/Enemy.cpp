@@ -92,6 +92,13 @@ void AEnemy::BeginPlay()
 
 	CombatCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapBegin);
 	CombatCollision->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapEnd);
+
+	//카메라와 플레이어 캐릭터 사이에 적이 들어오면 카메라가 적 메쉬에 부딪혀 자꾸 줌인되는 현상이 발생한다.
+	//다음과 같이 이를 막는다.
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	//첫번째 매개변수는 콜리젼 관련 조치를 취할 대상이고 두 번째 매개변수는 어떤 조치를 취할 것인가이다. 적 메쉬와 카메라와는 콜리젼이 발생하지 않도록, 무시하도록 했다.
+	//이와 같은 조치를 적의 캡슐 컴포넌트에도 똑같이 해주고 싶다.
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
 // Called every frame
@@ -139,10 +146,16 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 					Main->SetCombatTarget(nullptr);
 				}
 				Main->SetHasCombatTarget(false); 
-				if (Main->MainPlayerController)
-				{
-					Main->MainPlayerController->RemoveEnemyHealthBar(); // 플레이어가 적의 탐지반경 바깥으로 나온다면 적 체력상태바 표시를 없앤다.
-				}
+				
+				
+				//if (Main->MainPlayerController)
+				//{
+				//	Main->MainPlayerController->RemoveEnemyHealthBar(); // 플레이어가 적의 탐지반경 바깥으로 나온다면 적 체력상태바 표시를 없앤다.
+				//}
+				
+				//RefreshTarget에 위 내용이 포함돼 있으므로 아래 한 줄로 대체.
+				Main->RefreshTarget();
+				
 				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Idle); //NPC로 하여금 플레이어를 더 이상 추적하지 않고 Idle 상태로 돌아가게 함
 				if (AIController)
 				{
@@ -162,12 +175,18 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 			if (MainCharacter) //그 겹친 무엇인가가 주인공 캐릭터라면
 			{
 				bHasValidTarget = true; //플레이어가 적에게 유효한 타겟임을 확인
+				
+
+				
 				MainCharacter->SetCombatTarget(this);	//적과 메인캐릭터가 CombatSphere에서 오버랩되었다면 플레이어 캐릭터는 이 적(this 포인터로, 적클래스 객체)에게 초점을 맞출 것이다.
 				MainCharacter->SetHasCombatTarget(true);
-				if (MainCharacter->MainPlayerController) //또한 적 체력상태바를 띄우도록 한다.(이렇게 띄워진 상태바는 어그로스피어를 나오면 없어지도록 한다.)
-				{
-					MainCharacter->MainPlayerController->DisplayEnemyHealthBar();
-				}
+				//if (MainCharacter->MainPlayerController) //또한 적 체력상태바를 띄우도록 한다.(이렇게 띄워진 상태바는 어그로스피어를 나오면 없어지도록 한다.)
+				//{
+				//	MainCharacter->MainPlayerController->DisplayEnemyHealthBar();
+				//}
+
+				//위 작업을 RefreshTarget에서 하므로 이 함수로 일축한다.
+				MainCharacter->RefreshTarget();
 				
 				CombatTarget = MainCharacter;	//공격 대상은 메인캐릭터
 				bOverlappingCombatSphere = true; //탐지 범위에 들어서면
@@ -184,7 +203,7 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 	{
 		AMain* MainCharacter = Cast<AMain>(OtherActor);
 		{
-			if (MainCharacter)
+			if (MainCharacter && OtherComp)
 			{
 				bOverlappingCombatSphere = false;
 				//if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking) //공격을 하고 있는 중이라면 공격을 계속 끝까지 진행하도록 하겠지만 그것이 아니라면 플레이어에게 이동
@@ -193,6 +212,21 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 					MoveToTarget(MainCharacter);
 					CombatTarget = nullptr;
 				}
+
+				//오직 메인 캐릭터의 타겟이어야 아래 사항을 실행한다. 한 타겟이 오버랩 반경을 벗어나고 다른 타겟이 들어왔을 때 영향을 주지 않기 위함이다.
+				if (MainCharacter->CombatTarget == this)
+				{
+					MainCharacter->SetCombatTarget(nullptr); //  전투 반경을 벗어나면 공격대상 해제, 갱신, 공격 멈춤
+					MainCharacter->bHasCombatTarget = false;
+					MainCharacter->RefreshTarget();
+				}	
+
+				if (MainCharacter->MainPlayerController)
+				{
+					USkeletalMeshComponent* MainCharacterMesh = Cast<USkeletalMeshComponent>(OtherComp);
+					if (MainCharacterMesh) MainCharacter->MainPlayerController->RemoveEnemyHealthBar();
+				}
+
 
 				//적 전투 반경을 벗어나면 공격 지연을 위한 타이머 진행을 멈춰야 한다.
 				//이렇게 멈춘 타이머는 플레이어가 적의 전투반경으로 다시 들어가 타이머를 다시 작동시키기 전까지는 0이 되고 카운팅을 시작하지 않는다.

@@ -747,7 +747,15 @@ void AMain::RefreshTarget() //타겟 새로 설정 : 메인 캐릭터와 오버랩하는 모든 액�
 	//캐릭터와 가장 가까운 적을 타겟으로 정할 것이다. 캐릭터와 적 사이 거리를 계산해야 함.
 
 
-	if (OverlappingActors.Num() == 0) return;	//플레이어와 오버랩하는 적이 유효해야 한다.(0이라면 적이 없는 것. 최소한 한 명의 적이 있어야 함)
+	if (OverlappingActors.Num() == 0)	//플레이어와 오버랩하는 적이 유효해야 한다.(0이라면 적이 없는 것. 최소한 한 명의 적이 있어야 함)
+	{
+		//플레이어가 적을 죽이고 오버랩되는 다른 적이 없다면 적의 헬스바나 위젯을 뷰포트에서 모두 없앤다.
+		if (MainPlayerController)
+		{
+			MainPlayerController->RemoveEnemyHealthBar();
+		}
+		return; // 겹치는 적이 없으므로(0이므로) 함수 종료.
+	}
 	AEnemy* EnemyInClosestRange = Cast<AEnemy>(OverlappingActors[0]); //가장 가까운 적으로 설정할 적 객체를 접촉하는 액터의 배열에 넣음
 	if (EnemyInClosestRange) //만약 오버랩하는 적의 종류가 Enemy클래스인 것이 확인된다면(위의 과정으로 항상 맞음)
 	{	
