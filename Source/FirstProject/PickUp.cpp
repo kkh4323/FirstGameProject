@@ -11,7 +11,7 @@
 
 APickUp::APickUp()
 {
-	CoinCount = 1;
+	//CoinCount = 1;
 }
 
 
@@ -19,15 +19,19 @@ void APickUp::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 {
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	UE_LOG(LogTemp, Warning, TEXT("PickUp::OnOverlapBegin()"))
+	//UE_LOG(LogTemp, Warning, TEXT("PickUp::OnOverlapBegin()"))
 
 	if (OtherActor) 
 	{
 		AMain* Main = Cast<AMain>(OtherActor); //OtherActor을 Main으로 변환해 Main에 저장한다. 이 OtherActor가 AMain이 아니라면 Main은 NULL이 될 것이다.
 		if (Main)
 		{
-			Main->IncrementCoins(CoinCount);//cast한 결과가 Main(캐릭터) 이 맞다면 : Main이 PickUp의 객체와 겹쳤을 때(즉 아이템을 획득했을 때) 아이템 개수가 늘어나도록 한다.
+			OnPickupBP(Main);
+
+			//Main->IncrementCoins(CoinCount);//cast한 결과가 Main(캐릭터) 이 맞다면 : Main이 PickUp의 객체와 겹쳤을 때(즉 아이템을 획득했을 때) 아이템 개수가 늘어나도록 한다.
 			/*아이템을 획득했을 때, 그 위치를 저장해 표시하도록 한다. 아이템 획득 당시의 위치를 받아 main.h의 Tarray에 이를 저장한다.*/
+			
+			
 			Main->PickupLocations.Add(GetActorLocation());//PickupLocation의 자료형은 TArray이다. PickupLocations.Add()의 매개변수로는 획득한 아이템의 FVector, 즉 플레이어의 현재 위치가 들어간다.
 			/*아이템을 획득할 때마다 디버그구(sphere)가 그 위치에 나타나게 한다.*/
 

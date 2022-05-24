@@ -84,6 +84,12 @@ public:
 	USoundCue* PainSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* PainSound2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* PainSound3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* GreaterPainSound;
 
 	//플레이어 사망 시 소리
@@ -191,7 +197,10 @@ public:
 
 	virtual void Jump() override;
 
+	UFUNCTION(BlueprintCallable)
 	void IncrementCoins(int32 Amount);
+	UFUNCTION(BlueprintCallable)
+	void IncrementHealth(float Amount);
 
 
 protected:

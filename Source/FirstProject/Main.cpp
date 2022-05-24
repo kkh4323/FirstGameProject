@@ -425,6 +425,16 @@ void AMain::IncrementCoins(int32 Amount)
 	Coins += Amount;
 }
 
+//플레이어 캐릭터가 특정 아이템을 얻을 때 발생할 사건의 정의(포션줍기라든지) : 여기서는 체력량 증가
+void AMain::IncrementHealth(float Amount)
+{
+	if (Health + Amount >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
+	else Health += Amount;
+}
+
 
 //플레이어 체력이 0이하가 되었을 때 수행할 함수. 죽음 상태.
 //공격 함수와 마찬가지로 죽을 때의 애니메이션 실행을 따로 만들고 불러와야 한다.
@@ -580,6 +590,7 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 		//{
 		//	//UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound);//이러한 sound 를 사용하려면 그에 맞는 헤더 파일을 부를 수 있어야 한다.
 		//}
+		
 	}
 }
 
@@ -697,10 +708,10 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 		int32 HitAnimNum = FMath::RandRange(0, 2);
 		UAnimInstance* HitAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
 		if (DamageAmount >= 100) HitAnimNum = 3; //200이상의 데미지를 받으면 뒤로 튕겨져 가는 HitHard 애니메이션 재생
-		else if (DamageAmount < 30)
+		else if (DamageAmount < 40)
 		{
 			Health -= DamageAmount;
-			return 0; // 받은 데미지가 30미만이면 아무런 반응 안 함.
+			return 0; // 받은 데미지가 40미만이면 아무런 반응 안 함.
 		}
 		if (HitAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
 		{
@@ -719,10 +730,12 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 			else if (HitAnimNum == 1)
 			{
 				HitAnimInstance->Montage_JumpToSection(FName("Hit2"));
+				UGameplayStatics::PlaySound2D(this, this->PainSound2);
 			}
 			else if (HitAnimNum == 2)
 			{
 				HitAnimInstance->Montage_JumpToSection(FName("Hit3"));
+				UGameplayStatics::PlaySound2D(this, this->PainSound3);
 			}
 			else if (HitAnimNum == 3)
 			{
