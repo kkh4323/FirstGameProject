@@ -747,6 +747,36 @@ void AMain::RefreshTarget() //타겟 새로 설정 : 메인 캐릭터와 오버랩하는 모든 액�
 	//캐릭터와 가장 가까운 적을 타겟으로 정할 것이다. 캐릭터와 적 사이 거리를 계산해야 함.
 
 
-	if (OverlappingActors.Num() == 0) return;	//플레이어와 오버랩하는 적이 유효해야 한다.(OverlappingActors 배열에 
+	if (OverlappingActors.Num() == 0) return;	//플레이어와 오버랩하는 적이 유효해야 한다.(0이라면 적이 없는 것. 최소한 한 명의 적이 있어야 함)
+	AEnemy* EnemyInClosestRange = Cast<AEnemy>(OverlappingActors[0]); //가장 가까운 적으로 설정할 적 객체를 접촉하는 액터의 배열에 넣음
+	if (EnemyInClosestRange) //만약 오버랩하는 적의 종류가 Enemy클래스인 것이 확인된다면(위의 과정으로 항상 맞음)
+	{	
+		FVector PlayerLocation = GetActorLocation(); //플레이어 위치
+
+		float EnemyDistance = (EnemyInClosestRange->GetActorLocation() - PlayerLocation).Size();//가장 가까운 거리에 있는 적과의 거리 : 적의 위치에서 내 캐릭터의 위치를 뺀 결과를 돌려준다.
+
+		for (auto Actor : OverlappingActors) //OverlappingActors 배열의 모든 원소를 순회한다.(적 하나하나씩 플레이어와의 거리를 연산해 플레이어에게 그 정보를 전달하기 위함)
+		{
+			//액터[0]부터 배열 안 액터[?]까지 하나씩 모두 거리 정보를 연산할 것.
+			AEnemy* Enemy = Cast<AEnemy>(Actor); //단, 적 클래스인 것이 확인될 때에만 진행한다.
+			if (Enemy)
+			{
+				float EnemiesDistance = (Enemy->GetActorLocation() - PlayerLocation).Size();
+				if (EnemiesDistance < EnemyDistance)
+				{
+					EnemyDistance = EnemiesDistance;	
+					EnemyInClosestRange = Enemy;
+
+					//만약 배열 안의 다른 적의 거리가 현재 가장 짧은 거리에 있는 적의 거리보다 짧을 경우 '가장 짧은 거리'값과 그 적으로 가장 가까운 적을 갱신하는 것이다.
+				}
+			} 
+		}
+		if (MainPlayerController)
+		{
+			MainPlayerController->DisplayEnemyHealthBar();	//적 체력창 띄움
+		}
+		SetCombatTarget(EnemyInClosestRange);	// 전투 대상을 가장 가까이에 있는 적(으로 판명된 적 객체 중 하나를)을 타겟으로 설정
+		bHasCombatTarget = true;
+	}
 
 }

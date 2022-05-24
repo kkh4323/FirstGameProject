@@ -272,7 +272,7 @@ void AEnemy::MoveToTarget(class AMain* Target)
 		/*UE_LOG(LogTemp, Warning, TEXT("MoveToTarget()"));*/ //겹쳤을 때 풀력로그에 출력할 것
 		FAIMoveRequest MoveRequest; 
 		MoveRequest.SetGoalActor(Target); //GoalActor은 MoveRequest 구조체의 멤버함수로, 타겟 액터를 매개변수로 받는다. Main이 Target이 된다.
-		MoveRequest.SetAcceptanceRadius(3.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
+		MoveRequest.SetAcceptanceRadius(10.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
 
 		FNavPathSharedPtr NavPath;
 		AIController->MoveTo(MoveRequest, &NavPath); //MoveTo는 AI로 하여금 특정 위치로 이동하도록 하는 함수이다. 매개변수로 (MoveRequest로 지정된) 메인에 대한 설명을 받아 그 위치로 이동을 명하는 것이다. 이에 관해 언리얼 엔진 공식문서를 참고하도록.
@@ -311,14 +311,30 @@ void AEnemy::EnemyAttack()//적 공격시 실행할 내용
 				AnimInstance->Montage_Play(CombatMontage, 1.2f);	//CombatMontage의 애니메이션 1.2배속으로 수행
 
 				//AttackNumber에 따라 적 NPC는 다른 모션의 공격모션을 취할 것이다.
-				if (AttackNumber == 0) AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
-				else if (AttackNumber == 1) AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
-				else AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
+				if (AttackNumber == 0)
+				{
+					//UGameplayStatics::PlaySound2D(this, SwingSound);
+					AnimInstance->Montage_JumpToSection(FName("Attack1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Attack1"섹션을 FName의 파라미터로 넘겨야 함을 유의
+				}
+
+				else if (AttackNumber == 1)
+				{
+					//UGameplayStatics::PlaySound2D(this, SwingSound);
+					
+					AnimInstance->Montage_JumpToSection(FName("Attack2"), CombatMontage);
+				}
+					
+				else
+				{
+					//UGameplayStatics::PlaySound2D(this, SwingSound2);
+					AnimInstance->Montage_JumpToSection(FName("Attack3"), CombatMontage);
+				}
+					
 			}
-			if (SwingSound) //적이 무기를 휘두르는 소리 재생
-			{
-				UGameplayStatics::PlaySound2D(this, SwingSound);
-			}
+			//if (SwingSound) //적이 무기를 휘두르는 소리 재생
+			//{
+			//	UGameplayStatics::PlaySound2D(this, SwingSound);
+			//}
 		}
 	}
 }
@@ -338,10 +354,13 @@ void AEnemy::EnemyAttackEnd()//적 공격이 끝났을 때.
 	//그렇지 않다면 공격을 중단.
 }
 
+void AEnemy::EnemySwingingSound1()
+{
+	UGameplayStatics::PlaySound2D(this, SwingSound);
+}
 
 
-
-void AEnemy::EnemyDecrementHealth(float Amount)
+void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 {
 	int32 ENYHitScene = FMath::RandRange(1, 10);
 	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
@@ -349,7 +368,7 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 	if (EnemyHealth - Amount <= 0.f)
 	{
 		EnemyHealth -= Amount;	//체력이 줄어들게 함.
-		EnemyDie();				//다 떨어지면 죽음. 
+		EnemyDie(DamageCauser);				//다 떨어지면 죽음. 
 	}
 	//체력이 다 떨어져 죽는 게 아니라면 그냥 체력이 깎이는 경우가 있음.
 	else
@@ -409,13 +428,13 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	//	EnemyHealth -= DamageAmount;
 	//}
 	
-	EnemyDecrementHealth(DamageAmount);
+	EnemyDecrementHealth(DamageAmount, DamageCauser);
 
 	return DamageAmount;
 }
 
 //적이 죽을 때 호출되는 함수. 죽음 애니메이션을 실행시키고 적 객체를 월드에서 삭제.(혹은 그냥 그대로 둘 수도 있음)
-void AEnemy::EnemyDie()
+void AEnemy::EnemyDie(AActor* Causer) //Causer은 이 적을 죽게 한 원인, 즉 무엇으로부터 데미지를 받았는가이다.
 {
 	UE_LOG(LogTemp, Warning, TEXT("Die Executed"))
 	//적 상태 죽음상태로 전환
@@ -458,6 +477,16 @@ void AEnemy::EnemyDie()
 	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 전투콜리젼(전투시작반경) 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐) *CapsuleComponent.h 인클루드 해야 함.
 	GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemy::Disappear, DeathDelay);
+
+	bAttacking = false;
+
+	AMain* Main = Cast<AMain>(Causer);
+	if (Main)
+	{
+		Main->RefreshTarget();
+	}
+
+
 }
 
 

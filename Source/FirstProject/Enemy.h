@@ -87,7 +87,6 @@ public:
 
 	void ShiftKeyUp();
 
-	FTimerHandle TimerHandle;
 
 	/*
 	적이 공격을 받았을 때 파티클 시스템을 통해 출혈효과를 만들 것이다.
@@ -108,6 +107,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* SwingSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* SwingSound2;
+
 	//적 객체가 가할 데미지의 종류
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<UDamageType> DamageTypeClass;
@@ -122,7 +124,7 @@ public:
 	float DeathDelay;//죽은 후에 월드에 남는 시간
 
 
-	void EnemyDecrementHealth(float Amount);
+	void EnemyDecrementHealth(float Amount, AActor* DamageCauser);
 
 
 protected:
@@ -187,11 +189,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EnemyAttackEnd();
 
+	UFUNCTION(BlueprintCallable)
+	void EnemySwingingSound1();
 
 	//적 또한 플레이어로부터 공격을 받으면 데미지를 받아야 하므로 TakeDamage이용해 관련 기능 구현.
 	virtual float TakeDamage(float DamageAmount,struct FDamageEvent const& DamageEvent,class AController* EventInstigator,AActor* DamageCauser) override; 
 
-	void EnemyDie();
+	void EnemyDie(AActor* Causer);
 
 	//적은 죽으면 죽어 누워있는 동작상태를 계속 유지해야 한다. 이를 위해 애니메이션 몽타주에서 적이 죽어 누워있는 지점에 노티파이를 생성하고 C++를 통해 그 지점에 계속 적의 애니메이션이 멈춰있도록 해주어야 한다.
 	//UFUNCTION(BlueprintCallable)
