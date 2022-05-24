@@ -193,6 +193,7 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 					MoveToTarget(MainCharacter);
 					CombatTarget = nullptr;
 				}
+
 				//적 전투 반경을 벗어나면 공격 지연을 위한 타이머 진행을 멈춰야 한다.
 				//이렇게 멈춘 타이머는 플레이어가 적의 전투반경으로 다시 들어가 타이머를 다시 작동시키기 전까지는 0이 되고 카운팅을 시작하지 않는다.
 				GetWorldTimerManager().ClearTimer(AttackTimer); 
@@ -271,7 +272,7 @@ void AEnemy::MoveToTarget(class AMain* Target)
 		/*UE_LOG(LogTemp, Warning, TEXT("MoveToTarget()"));*/ //겹쳤을 때 풀력로그에 출력할 것
 		FAIMoveRequest MoveRequest; 
 		MoveRequest.SetGoalActor(Target); //GoalActor은 MoveRequest 구조체의 멤버함수로, 타겟 액터를 매개변수로 받는다. Main이 Target이 된다.
-		MoveRequest.SetAcceptanceRadius(1.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
+		MoveRequest.SetAcceptanceRadius(3.0f); // 적 NPC의 루트 컴포넌트와 플레이어 캐릭터 사이의 루트 컴포넌트가 닿지 않도록 서로 띄워놓는 거리.
 
 		FNavPathSharedPtr NavPath;
 		AIController->MoveTo(MoveRequest, &NavPath); //MoveTo는 AI로 하여금 특정 위치로 이동하도록 하는 함수이다. 매개변수로 (MoveRequest로 지정된) 메인에 대한 설명을 받아 그 위치로 이동을 명하는 것이다. 이에 관해 언리얼 엔진 공식문서를 참고하도록.
@@ -362,7 +363,7 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 
 		if (AnimInstance2)
 		{
-			AnimInstance2->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
+			AnimInstance2->Montage_Play(CombatMontage, 0.7f);	//CombatMontage의 애니메이션 0.7배속으로 수행
 			if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
@@ -371,7 +372,11 @@ void AEnemy::EnemyDecrementHealth(float Amount)
 			else if (ENYHitScene == 6)AnimInstance2->Montage_JumpToSection(FName("Hit6"), CombatMontage);
 			else if (ENYHitScene == 7)AnimInstance2->Montage_JumpToSection(FName("Hit7"), CombatMontage);
 			else if (ENYHitScene == 8)AnimInstance2->Montage_JumpToSection(FName("Hit8"), CombatMontage);
-			else AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
+			else
+			{
+				AnimInstance2->Montage_Play(CombatMontage, 1.f);
+				AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
+			}
 		}
 		EnemyHealth -= Amount;
 		bAttacking = false;
@@ -425,26 +430,30 @@ void AEnemy::EnemyDie()
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else if (ENYDeathScene == 2)
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else if (ENYDeathScene == 3)
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		else
 		{
 			AnimInstance->Montage_Play(CombatMontage, 1.f);	//CombatMontage의 애니메이션 1배속으로 수행
 			AnimInstance->Montage_JumpToSection(FName("EnemyDeath4"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
+			CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 
 	//적이 죽으면 콜리젼이 비활성화 되어야 한다 : (위에서부터)무기콜리젼(무기에 달린 콜리젼)과 어그로 스피어(탐지반경), 전투콜리젼(전투시작반경), 캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐)
-	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //무기콜리젼(무기에 달린 콜리젼)
+	//CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); //무기콜리젼(무기에 달린 콜리젼) => 죽음 애니메이션 직후에 실행(죽음 애니메이션 프레임이 길어 죽어도 콜리젼이 살아있기 때문)
 	AgroSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); //어그로 스피어(탐지반경)
 	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 전투콜리젼(전투시작반경) 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트(적 객체 물리적 충돌을 감지하는 캡슐) *CapsuleComponent.h 인클루드 해야 함.

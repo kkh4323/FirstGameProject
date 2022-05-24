@@ -263,9 +263,14 @@ public:
 
 
 	UFUNCTION(BlueprintCallable)
-	void PlaySwingSound(); //무기 휘두르는 소리
+	void SwingingSound(); //무기 휘두르는 소리
 
 	UFUNCTION(BlueprintCallable)
 	void DeathEnd();
+
+	void RefreshTarget(); //타겟을 새로 설정하게 함
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<AEnemy> TargetingActor; //플레이어 캐릭터와 겹치는 액터 중 적 클래스만 골라내기 위해 "GetOverlappingActors"에 매개변수로 넘기는 변수.
 
 };

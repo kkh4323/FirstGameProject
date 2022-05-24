@@ -727,7 +727,7 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 
 
 
-void AMain::PlaySwingSound() 
+void AMain::SwingingSound() 
 {
 	if(WeaponEquipped) UGameplayStatics::PlaySound2D(this, WeaponEquipped->SwingSound); //무기를 장비하고 있는 상태라면 무기를 휘두를 때마다 휘두르는 소리가 나도록 한다.
 }
@@ -736,4 +736,17 @@ void AMain::PlaySwingSound()
 void AMain::SetInterpToEnemy(bool Interp)
 {
 	bInterpToEnemy = Interp;
+}
+
+
+void AMain::RefreshTarget() //타겟 새로 설정 : 메인 캐릭터와 오버랩하는 모든 액터를 타겟으로 설정. (액터 중 Enemy만을 타겟으로 설정할 것)
+{
+	TArray<AActor*> OverlappingActors;
+	GetOverlappingActors(OverlappingActors, TargetingActor);//겹치는 액터 중 두 번째 매개변수로 들어간 클래스의 객체인 액터만 제외하고 모두 필터링 한다. 여기서 Enemy 클래스만 찾아내도록 하는 것.
+	
+	//캐릭터와 가장 가까운 적을 타겟으로 정할 것이다. 캐릭터와 적 사이 거리를 계산해야 함.
+
+
+	if (OverlappingActors.Num() == 0) return;	//플레이어와 오버랩하는 적이 유효해야 한다.(OverlappingActors 배열에 
+
 }
