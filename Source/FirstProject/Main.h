@@ -111,6 +111,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	USoundCue* BattleCry5;
 
+
+	//점프시 소리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundCue* JumpSound;
+
 	/*
 	일정거리 안에 들어서면 플레이어가 적을 향해 자동적으로 조준점을 맞추도록 해주고 싶다.
 	*/
@@ -224,6 +229,8 @@ public:
 	bool bMovingForward;
 	bool bMovingRight;
 
+	//1,2번 공격 연달아 하기 위한 기준 수.
+	int32 AttackStandard;
 
 	/*Called via input to turn at a given rate
 	@param Rate This is a normalized rate, i.e.1.0 means 100% of desired turn rate

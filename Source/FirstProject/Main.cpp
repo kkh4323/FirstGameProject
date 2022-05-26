@@ -92,7 +92,7 @@ AMain::AMain()
 	bMovingForward = false;
 	bMovingRight = false;
 
-
+	AttackStandard = 0;
 }
 
 // Called when the game starts or when spawned
@@ -472,6 +472,7 @@ void AMain::Jump()
 	if (MovementStatus != EMovementStatus::EMS_Dead) //플레이어가 살아있는 상태에서만 jump가 가능하다.
 	{
 		Super::Jump();
+		UGameplayStatics::PlaySound2D(this, this->JumpSound);
 	}
 }
 
@@ -550,16 +551,16 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다.
 		if (AnimInstance && CombatMontage)
 		{
-
 			/*
 			플레이어에게 공격 패턴을 부여할 수 있다.(콤보 시스템 형성)
 			콤보의 개수 만큼 case문을 생성.
 			*/
 			int32 Section = FMath::RandRange(0, 1); //RandRange의 매개변수로 들어가는 수 사이의 무작위 숫자대로 애니메이션을 실행한다. 0,1,2 하나가 나오고 그에 해당하는 case문의 애니메이션을 실행하도록 하는 것이다.
-			
 			//if (bPlayerMoving) Section = 1;
+			if (AttackStandard == 0) Section = 0;
+			else if (AttackStandard == 1) Section = 1; //1,2번 공격을 번갈아 가며 하기 위한 조치
+
 			if (bShiftKeyDown) Section = 2;
-			
 
 			switch (Section)
 			{
@@ -567,12 +568,14 @@ void AMain::Attack() //공격 진행 여부를 판단하고 해당 에니메이션을 불러와 진행한
 				UGameplayStatics::PlaySound2D(this, this->BattleCry1);
 				AnimInstance->Montage_Play(CombatMontage, 0.9f);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance->Montage_JumpToSection(FName("Attack_1"), CombatMontage); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
+				AttackStandard = 1;
 				break;
 
 			case 1:
 				UGameplayStatics::PlaySound2D(this, this->BattleCry2);
 				AnimInstance->Montage_Play(CombatMontage, 0.9f);//두 번째 인수는 애니메이션의 진행속도를 결정한다.
 				AnimInstance->Montage_JumpToSection(FName("Attack_2"), CombatMontage); //블루프린트에서 정한 에니메이션의 이름을 인수로 넣어주면 해당 에니메이션 호출 및 진행.
+				AttackStandard = 0;
 				break;
 
 			case 2:
