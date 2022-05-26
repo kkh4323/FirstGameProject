@@ -168,10 +168,10 @@ void AWeapons::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AA
 				UGameplayStatics::PlaySound2D(this, Enemy->HitSound); //HitSound는 enemy헤더파일에 있으나 include 했으므로 여기서도 사용 가능.
 			}
 
-			if (Enemy->ScreamingSound) //마찬가지로 ScreamingSound 도 재생
-			{
-				UGameplayStatics::PlaySound2D(this, Enemy->ScreamingSound); 
-			}
+			//if (Enemy->ScreamingSound) //마찬가지로 ScreamingSound 도 재생 => Enemy 클래스에서 피격시 소리가 나도록 했으므로 여기서는 삭제해준다.
+			//{
+			//	UGameplayStatics::PlaySound2D(this, Enemy->ScreamingSound); 
+			//}
 
 			if (DamageTypeClass) //적 액터에 데미지 적용
 			{
