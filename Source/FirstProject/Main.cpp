@@ -825,3 +825,22 @@ void AMain::RefreshTarget() //타겟 새로 설정 : 메인 캐릭터와 오버랩하는 모든 액�
 	}
 
 }
+
+
+void AMain::SwitchLevel(FName LevelName)
+{
+	//LevelName에 들어갈 맵 이름은 월드에 있다. 그러므로 월드에서 불러와야 한다.
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		FString CurrentLevel = World->GetMapName();//GetMapName은 내장함수로, 현재 맵의 이름을 불러온다. 
+		//불러오려는 맵의 이름이 현재 맵의 이름과 같아서는 안 된다.
+		FName CurrentLevelName(*CurrentLevel); //FName은 Fstring으로 초기화될 수 없다. *연산자는 이럴 경우 FName을 문자열로 초기화할 수 있게 한다.
+		if (CurrentLevelName != LevelName)
+		{
+			//LevelName으로 들어온 맵으로 전송한다.
+			UGameplayStatics::OpenLevel(World, LevelName);
+		}
+	
+	}
+}

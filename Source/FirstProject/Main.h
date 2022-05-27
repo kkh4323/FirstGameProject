@@ -307,4 +307,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<AEnemy> TargetingActor; //플레이어 캐릭터와 겹치는 액터 중 적 클래스만 골라내기 위해 "GetOverlappingActors"에 매개변수로 넘기는 변수.
 
+	void SwitchLevel(FName LevelName); //LevelName은 플레이어가 전송될 맵의 이름.
+
 };

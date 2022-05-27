@@ -122,11 +122,21 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 //어그로 반경과 공격 시작 반경에 플레이어가 '접'했음을 알림.
 void AEnemy::AgroSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	int32 SpotSound = FMath::RandRange(0, 4);
 	if (OtherActor && IsAlive())	//무언가 인식 반경에 닿음
 	{
 		AMain* Main = Cast<AMain>(OtherActor); //Main 은 주인공 캐릭터(형변환) 
 		if (Main)	//닿은 물체가 주인공 캐릭터이면
 		{
+			switch (SpotSound)
+			{
+			case 0: UGameplayStatics::PlaySound2D(this, EnemySpotSound1);
+			case 1: UGameplayStatics::PlaySound2D(this, EnemySpotSound2);
+			case 2: UGameplayStatics::PlaySound2D(this, EnemySpotSound3);
+			case 3: UGameplayStatics::PlaySound2D(this, EnemySpotSound4);
+			case 4: UGameplayStatics::PlaySound2D(this, EnemySpotSound5);
+			}
+			
 			MoveToTarget(Main); //Main으로 이동
 		}
 	}

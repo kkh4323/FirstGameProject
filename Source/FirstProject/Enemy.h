@@ -96,12 +96,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	class UParticleSystem* HitParticles;
 
-	//적이 무기에 맞았을 때 소리를 내도록 한다.(비명이라든지 둔탁한 소리라든지 등등)
+	//적이 무기에 맞았을 때 소리를 내도록 한다.(비명이라든지 둔탁한 소리라든지 등등.)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	class USoundCue* HitSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* ScreamingSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		USoundCue* ScreamingSound1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		USoundCue* ScreamingSound2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		USoundCue* ScreamingSound3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		USoundCue* ScreamingSound4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		USoundCue* ScreamingSound5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* EnemyDeathSound;
@@ -129,6 +144,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* SwingSound2;
 
+
+	//적 탐지 반경에 들어섰을 때 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemySpotSound1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemySpotSound2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemySpotSound3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemySpotSound4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* EnemySpotSound5;
+
+
 	//적 객체가 가할 데미지의 종류
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<UDamageType> DamageTypeClass;
@@ -143,7 +176,7 @@ public:
 	float DeathDelay;//죽은 후에 월드에 남는 시간
 
 
-	void EnemyDecrementHealth(float Amount, AActor* DamageCauser);
+	virtual void EnemyDecrementHealth(float Amount, AActor* DamageCauser);
 
 
 protected:
