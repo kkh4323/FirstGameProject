@@ -330,7 +330,7 @@ public:
 	void LoadGame(bool SetPosition);
 
 	UFUNCTION(BlueprintCallable)
-	void LoadGameSwitch(bool SetPosition);
+	void LoadGameNoSwitch();
 
 	bool bESCDown;
 	void ESCDown(); 

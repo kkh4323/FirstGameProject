@@ -56,6 +56,10 @@ public:
 
 	void TogglePauseMenu();
 
+	void GameModeOnly();
+
+
+
 protected:
 	virtual void BeginPlay() override; //다른 클래스들과 일치하도록 설정. protected이므로 상속관계일 때에나 이에 대한 접근이 가능하다.
 

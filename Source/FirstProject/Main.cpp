@@ -104,6 +104,13 @@ void AMain::BeginPlay()
 	Super::BeginPlay(); //게임 시작시 발생할 이벤트들
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController()); // 화면에 표시할 필요가 있을 때마다 표시를 돕기 위함
+
+	//LoadGameNoSwitch();
+	
+	if (MainPlayerController)
+	{
+		MainPlayerController->GameModeOnly();
+	}
 }
 
 // Called every frame
@@ -332,7 +339,7 @@ void AMain::MoveForward(float Value)
 {
 
 	bMovingForward = false; 
-	if (CanMove(Value)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
+	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -352,7 +359,7 @@ void AMain::MoveForward(float Value)
 void AMain::MoveRight(float Value)
 {
 	bMovingRight = false;
-	if (CanMove(Value))
+	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -367,23 +374,26 @@ void AMain::MoveRight(float Value)
 
 void AMain::LookUp(float Value)
 {
-	if (CanMove(Value))
-	{
-		AddControllerPitchInput(Value);
-	}
+	AddControllerPitchInput(Value);
 }
 
 void AMain::Turn(float Value)
 {
-	if (CanMove(Value))
-	{
-		AddControllerYawInput(Value);
-	}
+	AddControllerYawInput(Value);
+	//if (CanMove(Value))
+	//{
+		//AddControllerYawInput(Value);
+	//}
 }
 
 void AMain::TurnAtRate(float Rate)
 {
+	//if (CanMove(Value))
+	//{
+		//AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	//}
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+
 }
 
 void AMain::LookUpAtRate(float Rate)
@@ -769,10 +779,10 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 		int32 HitAnimNum = FMath::RandRange(0, 2);
 		UAnimInstance* HitAnimInstance = GetMesh()->GetAnimInstance(); //AnimInstance.h를 필요로 한다. 
 		if (DamageAmount >= 100) HitAnimNum = 3; //200이상의 데미지를 받으면 뒤로 튕겨져 가는 HitHard 애니메이션 재생
-		else if (DamageAmount < 40)
+		else if (DamageAmount < 60)
 		{
 			Health -= DamageAmount;
-			return 0; // 받은 데미지가 40미만이면 아무런 반응 안 함.
+			return 0; // 받은 데미지가 60미만이면 아무런 반응 안 함.
 		}
 		if (HitAnimInstance && CombatMontage)	//언리얼 에디터의 Main과 연결되어 있는 CombatMontage 를 불러옴. (DeathAnim이 CombatMontage와 같다면..)
 		{
@@ -913,6 +923,12 @@ void AMain::SaveGame()
 	SaveGameInstance->CharacterStatus.PlayerStamina = Stamina;
 	SaveGameInstance->CharacterStatus.PlayerMaxStamina = MaxStamina;
 
+	FString MapName = GetWorld()->GetMapName();
+	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+	UE_LOG(LogTemp, Warning, TEXT("MapName: %s"), *MapName)
+
+	SaveGameInstance->CharacterStatus.LevelName = MapName;
+
 	if (WeaponEquipped)
 	{
 		SaveGameInstance->CharacterStatus.WeaponName = WeaponEquipped->Name;
@@ -941,10 +957,6 @@ void AMain::LoadGame(bool SetPosition)
 
 	Coins = LoadGameInstance->CharacterStatus.Coins;
 
-	SetMovementStatus(EMovementStatus::EMS_Normal); //이것이 없을 경우 : 캐릭터가 죽은 시점에서 게임을 저장시점으로 로드했을 때 캐릭터가 여전히 죽어있는 상태가 된다.
-	GetMesh()->bPauseAnims = false;
-	GetMesh()->bNoSkeletonUpdate = false;		//DeathEnd함수로 비활성화되었던 애니메이션과 스켈레톤 활성화
-
 	if (WeaponStorage)
 	{
 		AItemStorage* Weapons = GetWorld()->SpawnActor<AItemStorage>(WeaponStorage);
@@ -966,4 +978,51 @@ void AMain::LoadGame(bool SetPosition)
 		SetActorRotation(LoadGameInstance->CharacterStatus.PlayerRotation);
 	}
 
+	SetMovementStatus(EMovementStatus::EMS_Normal); //이것이 없을 경우 : 캐릭터가 죽은 시점에서 게임을 저장시점으로 로드했을 때 캐릭터가 여전히 죽어있는 상태가 된다.
+	GetMesh()->bPauseAnims = false;
+	GetMesh()->bNoSkeletonUpdate = false;		//DeathEnd함수로 비활성화되었던 애니메이션과 스켈레톤 활성화
+
+	if (LoadGameInstance->CharacterStatus.LevelName != TEXT(""))
+	{
+		FName LevelName(*LoadGameInstance->CharacterStatus.LevelName);
+
+		SwitchLevel(LevelName);
+	}
+
+}
+
+
+void AMain::LoadGameNoSwitch()
+{
+	USaveGameClass* LoadGameInstance = Cast<USaveGameClass>(UGameplayStatics::CreateSaveGameObject(USaveGameClass::StaticClass()));
+
+	LoadGameInstance = Cast<USaveGameClass>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserIndex));
+
+	Health = LoadGameInstance->CharacterStatus.PlayerHealth;
+	MaxHealth = LoadGameInstance->CharacterStatus.PlayerMaxHealth;
+
+	Stamina = LoadGameInstance->CharacterStatus.PlayerStamina;
+	MaxStamina = LoadGameInstance->CharacterStatus.PlayerMaxStamina;
+
+	Coins = LoadGameInstance->CharacterStatus.Coins;
+
+
+	if (WeaponStorage)
+	{
+		AItemStorage* Weapons = GetWorld()->SpawnActor<AItemStorage>(WeaponStorage);
+		if (Weapons)
+		{
+			FString WeaponName = LoadGameInstance->CharacterStatus.WeaponName;
+
+			if (Weapons->WeaponMap.Contains(WeaponName))
+			{
+				AWeapons* WeaponToEquip = GetWorld()->SpawnActor<AWeapons>(Weapons->WeaponMap[WeaponName]);
+				WeaponToEquip->Equip(this);
+			}
+		}
+	}
+
+	SetMovementStatus(EMovementStatus::EMS_Normal); //이것이 없을 경우 : 캐릭터가 죽은 시점에서 게임을 저장시점으로 로드했을 때 캐릭터가 여전히 죽어있는 상태가 된다.
+	GetMesh()->bPauseAnims = false;
+	GetMesh()->bNoSkeletonUpdate = false;		//DeathEnd함수로 비활성화되었던 애니메이션과 스켈레톤 활성화
 }
