@@ -35,6 +35,17 @@ void AMainPlayerController::BeginPlay()
 		EnemyHealthBar->SetAlignmentInViewport(Alignment );
 	}
 
+	if (WPauseMenu) // 정지메뉴 활성화
+	{
+		PauseMenu = CreateWidget<UUserWidget>(this, WPauseMenu);
+		if (PauseMenu)
+		{
+			PauseMenu->AddToViewport();
+			PauseMenu->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+	}
+
 }
 
 void AMainPlayerController::DisplayEnemyHealthBar() //헬스바를 띄우는 함수. 
@@ -72,4 +83,47 @@ void AMainPlayerController::Tick(float DeltaTime)
 		EnemyHealthBar->SetDesiredSizeInViewport(SizeInViewport);
 	}
 
+}
+
+
+
+void AMainPlayerController::DisplayPauseMenu_Implementation()	//_Implementation이 붙은 함수는 블루프린트 전용 함수이다. C++에서 그것을 사용하려면 _Implementation을 붙여야 한다.
+//붉은 밑줄이 생기는 이유는 그냥 블루프린트 전용 함수라 여기엔 없어서 그렇다. 그냥 진행해도 상관 없다.
+{
+	if (PauseMenu)
+	{
+		bPauseMenuVisible = true;
+		PauseMenu->SetVisibility(ESlateVisibility::Visible);
+
+		//정지메뉴를 호출했을 때 입력장치(마우스 커서)가 나타나도록 한다.
+		FInputModeGameAndUI InputModeGameAndUI;
+		bShowMouseCursor = true; //마우스 커서가 보이도록 조치.(엔진에 원래 있는 불변수이다.)
+		SetInputMode(InputModeGameAndUI);
+	}
+	
+}
+
+void AMainPlayerController::RemovePauseMenu_Implementation()
+{
+	if (PauseMenu)
+	{
+
+		FInputModeGameOnly InputModeGameOnly;
+		bShowMouseCursor = false;
+		SetInputMode(InputModeGameOnly);
+
+		bPauseMenuVisible = false;
+	}
+}
+
+void AMainPlayerController::TogglePauseMenu()
+{
+	if (bPauseMenuVisible)
+	{
+		RemovePauseMenu();
+	}
+	else
+	{
+		DisplayPauseMenu();
+	}
 }

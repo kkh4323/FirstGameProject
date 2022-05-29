@@ -44,6 +44,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Particles")
 	bool bWeaponParticle;
 
+	UPROPERTY(EditDefaultsOnly, Category = "SavedData")
+	FString Name; //블루프린트에서 각 무기 객체의 이름을 정해주기 위한 변수.
 
 	/*
 	무기의 경우 static mesh가 아니라 skeletal mesh이다. 그래서 다른 item 처럼 mesh값을 설정할 수 없다.

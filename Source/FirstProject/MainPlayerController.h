@@ -30,15 +30,31 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* EnemyHealthBar;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<UUserWidget> WPauseMenu;;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* PauseMenu;
+
 	bool bEnemyHealthBarVisible;
 
 	FVector EnemyLocation; //적 백터위치값을 가지는 변수.
 	
+
+
 	//적 체력상태바를 띄우거나 감추는 제어기들. bEnemyHealthBarVisible은 Display의 경우 true가, remove의 경우 false가 된다.
 	void DisplayEnemyHealthBar();
 	void RemoveEnemyHealthBar();
 
+	bool bPauseMenuVisible;
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
+	void DisplayPauseMenu();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
+	void RemovePauseMenu();
+
+	void TogglePauseMenu();
 
 protected:
 	virtual void BeginPlay() override; //다른 클래스들과 일치하도록 설정. protected이므로 상속관계일 때에나 이에 대한 접근이 가능하다.

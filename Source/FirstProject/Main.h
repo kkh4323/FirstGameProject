@@ -71,6 +71,12 @@ public:
 	float MinSprintStamina;
 
 
+	//아이템(무기) 저장용 배열
+	UPROPERTY(EditDefaultsOnly, Category = "SaveData")
+	TSubclassOf<class AItemStorage> WeaponStorage; //AItemStorage로 만들어진 무기 키,밸류 값이 저장된 배열에 무기 정보를 저장. 그리고 플레이어가 그 정보에 접근 가능하게 함.
+
+
+
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
@@ -229,7 +235,13 @@ public:
 	bool bMovingForward;
 	bool bMovingRight;
 
-	//1,2번 공격 연달아 하기 위한 기준 수.
+	bool CanMove(float value);//MoveRight, MoveForward의 매개변수로 들어가 조건에 따라 움직임의 가능/불가능 여부를 설정
+
+	void LookUp(float Value);
+
+	void Turn(float Value);
+
+	//1,2번 공격 차례대로 연달아 하기 위해 설정해 놓는 기준 숫자.
 	int32 AttackStandard;
 
 	/*Called via input to turn at a given rate
@@ -308,5 +320,21 @@ public:
 	TSubclassOf<AEnemy> TargetingActor; //플레이어 캐릭터와 겹치는 액터 중 적 클래스만 골라내기 위해 "GetOverlappingActors"에 매개변수로 넘기는 변수.
 
 	void SwitchLevel(FName LevelName); //LevelName은 플레이어가 전송될 맵의 이름.
+
+
+	//게임을 저장하려면 메인 캐릭터에 대한 정보가 있어야 한다.
+	UFUNCTION(BlueprintCallable)
+	void SaveGame();
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGame(bool SetPosition);
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGameSwitch(bool SetPosition);
+
+	bool bESCDown;
+	void ESCDown(); 
+	bool bESCUp;
+	void ESCUp();
 
 };

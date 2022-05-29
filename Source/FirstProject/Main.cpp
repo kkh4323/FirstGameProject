@@ -17,7 +17,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundCue.h"
-
+#include "SaveGameClass.h"
+#include "ItemStorage.h"
 
 // Sets default values
 AMain::AMain()
@@ -91,6 +92,8 @@ AMain::AMain()
 
 	bMovingForward = false;
 	bMovingRight = false;
+
+	bESCDown = false;
 
 	AttackStandard = 0;
 }
@@ -299,19 +302,37 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("RMBt", IE_Released, this, &AMain::RMBUp);
 
 	//키보드 화살표 이용 카메라 시점 이동
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AMain::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &AMain::LookUp);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMain::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMain::LookUpAtRate);
 
+	//ESC 키 
+	PlayerInputComponent->BindAction("ESC", IE_Pressed, this, &AMain::ESCDown);
+	PlayerInputComponent->BindAction("ESC", IE_Released, this, &AMain::ESCUp);
+
 
 }
+
+bool AMain::CanMove(float Value) //플레이어가 움직임이 가능한지 조건에 따라 판별하는 함수.
+{
+	if (MainPlayerController)
+	{
+		return (Controller != nullptr) &&	//너무 길면 아래로 내려보낼 수 있다. 비쥬얼 스튜디오 특징.
+			(Value != 0.0f) && (!bAttacking) &&
+			(!bStrongAttacking) &&
+			(MovementStatus != EMovementStatus::EMS_Dead) &&
+			!MainPlayerController->bPauseMenuVisible;
+	}
+	return false;
+}
+
 
 void AMain::MoveForward(float Value)
 {
 
 	bMovingForward = false; 
-	if ((Controller != nullptr) && (Value != 0.0f)&&(!bAttacking)&&(!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
+	if (CanMove(Value)) //공격하고 있을 때이거나 죽어있을 땐 움직이지 않도록 한다. 
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -331,7 +352,7 @@ void AMain::MoveForward(float Value)
 void AMain::MoveRight(float Value)
 {
 	bMovingRight = false;
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (!bStrongAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
+	if (CanMove(Value))
 	{
 		//find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -344,7 +365,21 @@ void AMain::MoveRight(float Value)
 	}
 }
 
+void AMain::LookUp(float Value)
+{
+	if (CanMove(Value))
+	{
+		AddControllerPitchInput(Value);
+	}
+}
 
+void AMain::Turn(float Value)
+{
+	if (CanMove(Value))
+	{
+		AddControllerYawInput(Value);
+	}
+}
 
 void AMain::TurnAtRate(float Rate)
 {
@@ -362,6 +397,11 @@ void AMain::LMBDown()
 	bLMBDown = true;
 
 	if (MovementStatus == EMovementStatus::EMS_Dead) return; // 죽은 상태라면 함수 실행 불가
+
+	if (MainPlayerController)
+	{
+		if (MainPlayerController->bPauseMenuVisible) return; //정지화면이 열려있다면 마우스 버튼이 안 눌린다. 오른쪽 마우스 버튼도 동일하게 해준다.
+	}
 
 	if (ActiveOverlappingItem) // 장비와 겹침상태임을 나타내는 변수가 true라면 그 장비가 무기타입인지 확인한다. 맞다면 장비를 장착하게 한다.
 	{
@@ -384,7 +424,7 @@ void AMain::RMBDown()
 	bRMBDown = true;
 
 	if (MovementStatus == EMovementStatus::EMS_Dead) return; // 죽은 상태라면 함수 실행 불가
-
+	if (MainPlayerController) if (MainPlayerController->bPauseMenuVisible) return;
 	if (WeaponEquipped)// 장비와 겹치지 않는다면 장비를 이비 착용하고 있는지 확인
 	{
 		StrongAttack(); //이 함수의 리턴값이 true가 되면 플레이어가 공격 수행이 갸능한 것.
@@ -400,6 +440,22 @@ void AMain::LMBUp()
 void AMain::RMBUp()
 {
 	bRMBDown = false;
+}
+
+void AMain::ESCUp()
+{
+	bESCDown = false;
+}
+
+void AMain::ESCDown()
+{
+	bESCDown = true;
+
+	if (MainPlayerController)
+	{
+		MainPlayerController->TogglePauseMenu();
+	}
+
 }
 
 
@@ -469,6 +525,8 @@ void AMain::DeathEnd()
 //Jump는 character.h에 이미 있는 함수로, main에서 상속받아 활용한다.
 void AMain::Jump()
 {
+	if (MainPlayerController) if (MainPlayerController->bPauseMenuVisible) return;
+
 	if (MovementStatus != EMovementStatus::EMS_Dead) //플레이어가 살아있는 상태에서만 jump가 가능하다.
 	{
 		Super::Jump();
@@ -843,4 +901,69 @@ void AMain::SwitchLevel(FName LevelName)
 		}
 	
 	}
+}
+
+
+void AMain::SaveGame()
+{
+	USaveGameClass*SaveGameInstance = Cast<USaveGameClass>(UGameplayStatics::CreateSaveGameObject(USaveGameClass::StaticClass()));
+
+	SaveGameInstance->CharacterStatus.PlayerHealth = Health;
+	SaveGameInstance->CharacterStatus.PlayerMaxHealth = MaxHealth;
+	SaveGameInstance->CharacterStatus.PlayerStamina = Stamina;
+	SaveGameInstance->CharacterStatus.PlayerMaxStamina = MaxStamina;
+
+	if (WeaponEquipped)
+	{
+		SaveGameInstance->CharacterStatus.WeaponName = WeaponEquipped->Name;
+	}
+
+	SaveGameInstance->CharacterStatus.Coins = Coins;
+	SaveGameInstance->CharacterStatus.PlayerLocation = GetActorLocation();
+	SaveGameInstance->CharacterStatus.PlayerRotation = GetActorRotation();
+
+	//게임을 슬롯에 저장하는 함수. 세이브정보를 슬롯에 불러오면 세이브게임 인스턴스는 그 메모리 전부와 데이터를 컴퓨터 메모리 어딘가에 저장한다.
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserIndex);
+
+}
+
+void AMain::LoadGame(bool SetPosition)
+{
+	USaveGameClass* LoadGameInstance = Cast<USaveGameClass>(UGameplayStatics::CreateSaveGameObject(USaveGameClass::StaticClass()));   
+
+	LoadGameInstance = Cast<USaveGameClass>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserIndex));
+
+	Health = LoadGameInstance->CharacterStatus.PlayerHealth;
+	MaxHealth = LoadGameInstance->CharacterStatus.PlayerMaxHealth;
+
+	Stamina = LoadGameInstance->CharacterStatus.PlayerStamina;
+	MaxStamina = LoadGameInstance->CharacterStatus.PlayerMaxStamina;
+
+	Coins = LoadGameInstance->CharacterStatus.Coins;
+
+	SetMovementStatus(EMovementStatus::EMS_Normal); //이것이 없을 경우 : 캐릭터가 죽은 시점에서 게임을 저장시점으로 로드했을 때 캐릭터가 여전히 죽어있는 상태가 된다.
+	GetMesh()->bPauseAnims = false;
+	GetMesh()->bNoSkeletonUpdate = false;		//DeathEnd함수로 비활성화되었던 애니메이션과 스켈레톤 활성화
+
+	if (WeaponStorage)
+	{
+		AItemStorage* Weapons = GetWorld()->SpawnActor<AItemStorage>(WeaponStorage);
+		if (Weapons)
+		{
+			FString WeaponName = LoadGameInstance->CharacterStatus.WeaponName;
+
+			if (Weapons->WeaponMap.Contains(WeaponName))
+			{
+				AWeapons* WeaponToEquip = GetWorld()->SpawnActor<AWeapons>(Weapons->WeaponMap[WeaponName]);
+				WeaponToEquip->Equip(this);
+			}
+		}
+	}
+ 
+	if (SetPosition)
+	{
+		SetActorLocation(LoadGameInstance->CharacterStatus.PlayerLocation);
+		SetActorRotation(LoadGameInstance->CharacterStatus.PlayerRotation);
+	}
+
 }
