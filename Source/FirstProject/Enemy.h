@@ -101,6 +101,9 @@ public:
 	class USoundCue* HitSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class USoundCue* HitSound2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* ScreamingSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
@@ -109,14 +112,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 		USoundCue* ScreamingSound2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-		USoundCue* ScreamingSound3;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-		USoundCue* ScreamingSound4;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-		USoundCue* ScreamingSound5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	USoundCue* EnemyDeathSound;

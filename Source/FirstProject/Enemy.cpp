@@ -409,7 +409,7 @@ void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 {
 	int32 ENYHitScene = FMath::RandRange(1, 10);
 	UAnimInstance* AnimInstance2 = GetMesh()->GetAnimInstance(); //Mesh에 있는 Animation 수행
-	if (Amount > 50) ENYHitScene = 9;
+	if (Amount > 80) ENYHitScene = 9;
 	if (EnemyHealth - Amount <= 0.f)
 	{
 		EnemyHealth -= Amount;	//체력이 줄어들게 함.
@@ -428,7 +428,7 @@ void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 
 		if (AnimInstance2)
 		{
-			AnimInstance2->Montage_Play(CombatMontage, 0.7f);	//CombatMontage의 애니메이션 0.7배속으로 수행
+			AnimInstance2->Montage_Play(CombatMontage, 0.6f);	//CombatMontage의 애니메이션 0.6배속으로 수행
 			if (ENYHitScene == 1) AnimInstance2->Montage_JumpToSection(FName("Hit1"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 2) AnimInstance2->Montage_JumpToSection(FName("Hit2"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
 			else if (ENYHitScene == 3)AnimInstance2->Montage_JumpToSection(FName("Hit3"), CombatMontage); //블루프린트의 CombatMontage 애니메이션 몽타주에서 설정한 "Death"섹션을 FName의 파라미터로 넘겨야 함을 유의. 섹션 이름 정확해야 함.
@@ -443,9 +443,26 @@ void AEnemy::EnemyDecrementHealth(float Amount, AActor* DamageCauser)
 				AnimInstance2->Montage_JumpToSection(FName("HitHard"), CombatMontage);
 			}
 		}
-		UGameplayStatics::PlaySound2D(this, HitSound);
+		if (ENYHitScene == 10 || ENYHitScene == 9 || ENYHitScene == 8 || ENYHitScene == 7 || ENYHitScene == 6)
+		{
+			UGameplayStatics::PlaySound2D(this, HitSound);
+		}
+		else UGameplayStatics::PlaySound2D(this, HitSound2);
+
 		EnemyHealth -= Amount;
-		if (EnemyHealth > 0.f) UGameplayStatics::PlaySound2D(this, ScreamingSound);
+
+		if (EnemyHealth > 0.f)
+		{
+			if (ENYHitScene == 10 || ENYHitScene == 9 || ENYHitScene == 8)
+			{
+				UGameplayStatics::PlaySound2D(this, ScreamingSound);
+			}
+			else  if (ENYHitScene == 7 || ENYHitScene == 6 || ENYHitScene == 5)
+			{
+				UGameplayStatics::PlaySound2D(this, ScreamingSound1);
+			}
+			else UGameplayStatics::PlaySound2D(this, ScreamingSound2);
+		}
 		bAttacking = false;
 	}
 }

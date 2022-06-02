@@ -9,6 +9,7 @@
 #include "Components/BoxComponent.h" //무기에 박스 컴포넌트를 입혀주므로 필요한 헤더 파일.
 #include "Enemy.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Engine/Engine.h"
 
 AWeapons::AWeapons()
 {
@@ -54,6 +55,8 @@ void AWeapons::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* 
 	/*무기를 드는 것은 캐릭터가 무기 아이템에 접근해 무기Mesh와 캐릭터 Mesh가 겹쳤을 때 발생해야 한다.*/
 	if ((WeaponState == EWeaponState::EWS_Pickup) && OtherActor) //아직 플레이어에 의해 장착되지 않은 무기인 경우. OtherActor은 무기와 닿은 액터가 캐릭터인지 아닌지 확인하는 것.
 	{
+		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Green, FString::Printf(TEXT("Click left mouse button to equip weapons"))); //무기 획득 버튼 설명 표시. 왜인지 한글은 컴파일이 안 된다. 
+
 		/*
 		무기아이템과 닿은 것이 캐릭터(Main)인지 확인하고 맞다면 Equip 함수를 호출. 
 		Equip은 Main을 매개변수로 받아 아이템을 장착시킨다.
