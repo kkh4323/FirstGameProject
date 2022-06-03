@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -96,6 +97,7 @@ AMain::AMain()
 	bESCDown = false;
 
 	AttackStandard = 0;
+
 }
 
 // Called when the game starts or when spawned
@@ -105,7 +107,7 @@ void AMain::BeginPlay()
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController()); // 화면에 표시할 필요가 있을 때마다 표시를 돕기 위함
 
-	//LoadGameNoSwitch();
+	/*LoadGameNoSwitch();*/
 	
 	if (MainPlayerController)
 	{
@@ -941,6 +943,7 @@ void AMain::SaveGame()
 	//게임을 슬롯에 저장하는 함수. 세이브정보를 슬롯에 불러오면 세이브게임 인스턴스는 그 메모리 전부와 데이터를 컴퓨터 메모리 어딘가에 저장한다.
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserIndex);
 
+	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Green, FString::Printf(TEXT("Game Saved!")));
 }
 
 void AMain::LoadGame(bool SetPosition)
